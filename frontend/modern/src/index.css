@@ -1,0 +1,51 @@
+/* LEX Modern Frontend Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2b2b2b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6b6b6b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8b8b8b;
+}
+
+/* Loading animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 2s infinite;
+}
+
+/* Divine glow effect */
+.divine-glow {
+  box-shadow: 0 0 20px rgba(25, 118, 210, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.divine-glow:hover {
+  box-shadow: 0 0 30px rgba(25, 118, 210, 0.5);
+}

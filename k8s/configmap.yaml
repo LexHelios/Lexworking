@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lexos-config
+  namespace: lexos
+data:
+  LEXOS_HOST: "0.0.0.0"
+  LEXOS_PORT: "8000"
+  LEXOS_DEBUG: "false"
+  LEXOS_LOG_LEVEL: "INFO"
+  REDIS_URL: "redis://redis-service:6379"
+  MILVUS_HOST: "milvus-service"
+  MILVUS_PORT: "19530"
+  VLLM_HOST: "localhost"
+  VLLM_PORT: "8001"
+  PROMETHEUS_PORT: "8002"
+  METRICS_ENABLED: "true"
+  HEALTH_CHECK_INTERVAL: "30"
+  DIGITAL_SOUL_ENABLED: "true"
+  MOCK_EXTERNAL_APIS: "false"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lexos-secrets
+  namespace: lexos
+type: Opaque
+stringData:
+  # These will be provided when you're ready to deploy
+  LEXOS_SECRET_KEY: "your-production-secret-key-here"
+  TOGETHER_API_KEY: ""
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  ELEVENLABS_API_KEY: ""
+  DEEPSEEK_API_KEY: ""
+  DEEPGRAM_API_KEY: ""
+  GROQ_API_KEY: ""
+  OPENROUTER_API_KEY: ""
+  PERPLEXITY_API_KEY: ""
+  COHERE_API_KEY: ""
+  GEMINI_API_KEY: ""

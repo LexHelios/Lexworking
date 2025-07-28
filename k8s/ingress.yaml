@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lexos-ingress
+  namespace: lexos
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/websocket-services: "lexos-api-service"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+    # SSL/TLS configuration (uncomment when ready)
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  
+  # TLS configuration (uncomment when ready)
+  # tls:
+  # - hosts:
+  #   - your-domain.com
+  #   secretName: lexos-tls
+  
+  rules:
+  - host: localhost  # Change to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: lexos-api-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: lexos-api-service
+            port:
+              number: 80
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: lexos-api-service
+            port:
+              number: 80
+      - path: /docs
+        pathType: Prefix
+        backend:
+          service:
+            name: lexos-api-service
+            port:
+              number: 80
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: lexos-api-service
+            port:
+              number: 8002
