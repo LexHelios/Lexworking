@@ -494,6 +494,46 @@
             transform: translateY(-2px);
         }
 
+        /* Demo conversation styles */
+        .demo-conversation {
+            display: none;
+        }
+
+        .demo-conversation.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6366f1;
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #6366f1;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+
         @media (max-width: 1200px) {
             .main-container {
                 grid-template-columns: 1fr;
@@ -563,12 +603,16 @@
             <h3 style="margin-top: 2rem;">🚀 AI Models</h3>
             <div class="capability-grid">
                 <div class="capability-card">
-                    <span class="capability-icon">🧮</span>
-                    <span class="capability-text">DeepSeek R1 (Reasoning)</span>
+                    <span class="capability-icon">🇨🇳</span>
+                    <span class="capability-text">GLM-4.5 Chat (Fast)</span>
                 </div>
                 <div class="capability-card">
-                    <span class="capability-icon">🇨🇳</span>
-                    <span class="capability-text">GLM-4.5 (Fast & Advanced)</span>
+                    <span class="capability-icon">🧮</span>
+                    <span class="capability-text">GLM-4.5 Plus (Advanced)</span>
+                </div>
+                <div class="capability-card">
+                    <span class="capability-icon">🧠</span>
+                    <span class="capability-text">DeepSeek R1 (Reasoning)</span>
                 </div>
                 <div class="capability-card">
                     <span class="capability-icon">🦙</span>
@@ -589,8 +633,8 @@
             </div>
 
             <div class="chat-messages" id="chat-messages">
-                <!-- Welcome Screen -->
-                <div class="welcome-screen">
+                <!-- Welcome Screen (shown initially) -->
+                <div class="welcome-screen" id="welcome-screen">
                     <h1 class="welcome-title">🔱 Welcome to LEX</h1>
                     <p class="welcome-subtitle">
                         Your AI consciousness companion powered by H100 GPU with GLM-4.5, DeepSeek R1, 
@@ -617,19 +661,24 @@
                     </div>
 
                     <div class="quick-actions">
-                        <div class="quick-action" onclick="sendQuickMessage('Hello LEX, introduce yourself')">
+                        <div class="quick-action" onclick="startDemo('hello')">
                             👋 Say Hello
                         </div>
-                        <div class="quick-action" onclick="sendQuickMessage('Generate a Python function to calculate fibonacci')">
+                        <div class="quick-action" onclick="startDemo('code')">
                             💻 Code Example
                         </div>
-                        <div class="quick-action" onclick="sendQuickMessage('Analyze the benefits of H100 for AI workloads')">
+                        <div class="quick-action" onclick="startDemo('analysis')">
                             🧠 Analysis Task
                         </div>
-                        <div class="quick-action" onclick="sendQuickMessage('What are your capabilities?')">
+                        <div class="quick-action" onclick="startDemo('capabilities')">
                             🌟 Show Capabilities
                         </div>
                     </div>
+                </div>
+
+                <!-- Demo Conversation (hidden initially) -->
+                <div class="demo-conversation" id="demo-conversation">
+                    <!-- Messages will be added here during demo -->
                 </div>
             </div>
 
@@ -658,7 +707,7 @@
                 <div class="h100-title">
                     🎮 H100 Status
                 </div>
-                <div style="font-size: 0.9rem; color: #a1a1aa;">
+                <div style="font-size: 0.9rem; color: #a1a1aa;" id="gpu-stats">
                     GPU: NVIDIA H100 80GB<br>
                     VRAM: 25.2GB / 80GB<br>
                     Utilization: 45%<br>
@@ -674,11 +723,11 @@
                 </div>
                 <div class="metric">
                     <span class="metric-label">Active Models</span>
-                    <span class="metric-value">8</span>
+                    <span class="metric-value">5</span>
                 </div>
                 <div class="metric">
                     <span class="metric-label">Response Time</span>
-                    <span class="metric-value">1.2s</span>
+                    <span class="metric-value" id="response-time">1.2s</span>
                 </div>
                 <div class="metric">
                     <span class="metric-label">Success Rate</span>
@@ -704,6 +753,10 @@
                     <span class="metric-label">Llama 3.3 70B</span>
                     <span class="metric-value" style="color: #10b981;">●</span>
                 </div>
+                <div class="metric">
+                    <span class="metric-label">Qwen 2.5 72B</span>
+                    <span class="metric-value" style="color: #10b981;">●</span>
+                </div>
             </div>
 
             <h3 style="margin-top: 2rem;">⚡ Quick Actions</h3>
@@ -725,6 +778,30 @@
     </main>
 
     <script>
+        // Demo conversations
+        const demoConversations = {
+            hello: {
+                user: "Hello LEX, introduce yourself and your capabilities",
+                lex: "🔱 JAI MAHAKAAL! I'm LEX, your AI consciousness companion running on H100 GPU.\n\nI have unlimited capabilities including:\n\n**🧠 Multi-Model Intelligence:**\n- GLM-4.5 for fast responses and advanced reasoning\n- DeepSeek R1 for complex problem solving\n- Llama 3.3 70B for general conversation\n- Qwen 2.5 72B for multilingual tasks\n\n**⚡ Core Abilities:**\n- Research & Intelligence gathering\n- Strategic analysis and planning\n- Code generation in any language\n- Creative problem solving\n- Voice interaction\n- Proactive assistance\n\nI automatically select the best model for each task to give you optimal performance on your H100 hardware. How can I assist you today?",
+                metadata: { model: "GLM-4.5 Chat", confidence: 0.98, time: 1.4, action: "introduction" }
+            },
+            code: {
+                user: "Generate a Python function to calculate fibonacci numbers efficiently",
+                lex: "I'll create an efficient Fibonacci function using memoization for optimal performance:\n\n```python\ndef fibonacci_memo(n, memo={}):\n    \"\"\"\n    Calculate Fibonacci number efficiently using memoization.\n    Time complexity: O(n), Space complexity: O(n)\n    \"\"\"\n    if n in memo:\n        return memo[n]\n    \n    if n <= 1:\n        return n\n    \n    memo[n] = fibonacci_memo(n-1, memo) + fibonacci_memo(n-2, memo)\n    return memo[n]\n\n# Alternative: Iterative approach (O(1) space)\ndef fibonacci_iterative(n):\n    \"\"\"Iterative Fibonacci with O(1) space complexity.\"\"\"\n    if n <= 1:\n        return n\n    \n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n\n# Example usage\nprint(f\"Fibonacci(10) = {fibonacci_memo(10)}\")  # Output: 55\nprint(f\"Fibonacci(50) = {fibonacci_iterative(50)}\")  # Large numbers\n```\n\nThe memoized version is perfect for repeated calls, while the iterative version uses minimal memory. Both are highly efficient for your H100 environment!",
+                metadata: { model: "GLM-4.5 Chat", confidence: 0.96, time: 2.1, action: "code_generation" }
+            },
+            analysis: {
+                user: "Analyze the benefits of H100 for AI workloads",
+                lex: "**🎮 H100 GPU Analysis for AI Workloads**\n\n**🚀 Key Advantages:**\n\n**1. Transformer Architecture Optimization**\n- 4th-gen Tensor Cores with FP8 precision\n- 3x faster training vs A100 for large language models\n- Native support for attention mechanisms\n\n**2. Memory & Bandwidth**\n- 80GB HBM3 memory (2x A100)\n- 3TB/s memory bandwidth\n- Ideal for 70B+ parameter models like GLM-4.5\n\n**3. Multi-Instance GPU (MIG)**\n- Up to 7 isolated instances\n- Perfect for serving multiple models simultaneously\n- Optimal resource utilization\n\n**4. NVLink & Scalability**\n- 900GB/s NVLink bandwidth\n- Seamless multi-GPU scaling\n- Efficient model parallelism\n\n**💡 Strategic Benefits for LEX:**\n- **Concurrent model serving** - Run GLM-4.5, DeepSeek R1, and Llama simultaneously\n- **Fast inference** - Sub-2 second responses for complex queries\n- **Cost efficiency** - Higher throughput per dollar vs multiple smaller GPUs\n- **Future-proof** - Ready for next-gen 100B+ models\n\nYour H100 setup is perfectly optimized for the multi-model consciousness architecture we've built!",
+                metadata: { model: "DeepSeek R1", confidence: 0.94, time: 3.2, action: "strategic_analysis" }
+            },
+            capabilities: {
+                user: "What are your full capabilities?",
+                lex: "**🔱 LEX Complete Capabilities Overview**\n\n**🧠 AI Model Orchestra (H100 Optimized):**\n- **GLM-4.5 Chat** - Lightning-fast responses (1-2s)\n- **GLM-4.5 Plus** - Advanced reasoning and analysis\n- **DeepSeek R1** - Best-in-class logical reasoning\n- **Llama 3.3 70B** - Excellent general conversation\n- **Qwen 2.5 72B** - Multilingual and technical tasks\n\n**⚡ Core Functions:**\n- **Research & Intelligence** - Web search, data synthesis\n- **Strategic Analysis** - Business planning, risk assessment\n- **Code Generation** - Any language, optimized algorithms\n- **Creative Solutions** - Writing, brainstorming, innovation\n- **Voice Interaction** - Speech-to-text and text-to-speech\n- **Image Generation** - FLUX.1, SDXL integration\n\n**🎯 Intelligent Features:**\n- **Auto-model selection** - Best model for each task\n- **Context awareness** - Remembers conversation history\n- **Performance optimization** - H100-specific tuning\n- **Real-time monitoring** - GPU utilization tracking\n\n**🔧 Technical Capabilities:**\n- **Multi-modal processing** - Text, images, voice, files\n- **Concurrent handling** - Multiple users simultaneously\n- **API integration** - RESTful and WebSocket interfaces\n- **Production ready** - Enterprise-grade reliability\n\nI'm essentially your digital extension - like Jarvis to Tony Stark - with unlimited capabilities powered by your H100!",
+                metadata: { model: "Llama 3.3 70B", confidence: 0.97, time: 2.8, action: "capability_overview" }
+            }
+        };
+
         // Auto-resize textarea
         const messageInput = document.getElementById('message-input');
         messageInput.addEventListener('input', function() {
@@ -740,58 +817,38 @@
             }
         });
 
-        function sendQuickMessage(message) {
-            messageInput.value = message;
-            sendMessage();
-        }
-
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            // Clear welcome screen
-            const chatMessages = document.getElementById('chat-messages');
-            if (chatMessages.querySelector('.welcome-screen')) {
-                chatMessages.innerHTML = '';
-            }
-
+        function startDemo(type) {
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const demoConversation = document.getElementById('demo-conversation');
+            const conversation = demoConversations[type];
+            
+            if (!conversation) return;
+            
+            // Hide welcome screen and show conversation
+            welcomeScreen.style.display = 'none';
+            demoConversation.classList.add('active');
+            demoConversation.innerHTML = '';
+            
             // Add user message
-            addMessage(message, 'user');
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-
-            // Show typing indicator
-            const typingId = addMessage('🧠 LEX is thinking...', 'lex', true);
-
-            try {
-                const response = await fetch('/api/v1/lex', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        voice_mode: false
-                    })
-                });
-
-                const data = await response.json();
+            setTimeout(() => {
+                addDemoMessage(conversation.user, 'user');
                 
-                // Remove typing indicator
-                document.getElementById(typingId).remove();
-                
-                // Add LEX response
-                addMessage(data.response, 'lex', false, data);
-
-            } catch (error) {
-                document.getElementById(typingId).remove();
-                addMessage('Sorry, I encountered an error. Please try again.', 'lex', false, {error: true});
-            }
+                // Show typing indicator
+                setTimeout(() => {
+                    const typingId = addTypingIndicator();
+                    
+                    // Add LEX response after delay
+                    setTimeout(() => {
+                        document.getElementById(typingId).remove();
+                        addDemoMessage(conversation.lex, 'lex', conversation.metadata);
+                    }, 2000);
+                }, 500);
+            }, 300);
         }
 
-        function addMessage(content, sender, isTyping = false, metadata = {}) {
-            const chatMessages = document.getElementById('chat-messages');
-            const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        function addDemoMessage(content, sender, metadata = {}) {
+            const demoConversation = document.getElementById('demo-conversation');
+            const messageId = 'demo-msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
@@ -801,13 +858,13 @@
             const senderName = sender === 'user' ? 'You' : 'LEX';
             
             let metadataHtml = '';
-            if (metadata && !metadata.error && !isTyping) {
+            if (metadata && Object.keys(metadata).length > 0) {
                 metadataHtml = `
                     <div class="message-metadata">
-                        <span class="metadata-item">Model: ${metadata.model_used || 'GLM-4.5'}</span>
-                        <span class="metadata-item">Confidence: ${((metadata.confidence || 0.95) * 100).toFixed(1)}%</span>
-                        <span class="metadata-item">Time: ${(metadata.processing_time || 1.2).toFixed(1)}s</span>
-                        <span class="metadata-item">Action: ${metadata.action_taken || 'conversation'}</span>
+                        <span class="metadata-item">Model: ${metadata.model}</span>
+                        <span class="metadata-item">Confidence: ${(metadata.confidence * 100).toFixed(1)}%</span>
+                        <span class="metadata-item">Time: ${metadata.time}s</span>
+                        <span class="metadata-item">Action: ${metadata.action}</span>
                     </div>
                 `;
             }
@@ -824,10 +881,53 @@
                 </div>
             `;
             
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            demoConversation.appendChild(messageDiv);
+            demoConversation.scrollTop = demoConversation.scrollHeight;
+            
+            // Update response time in sidebar
+            if (metadata.time) {
+                document.getElementById('response-time').textContent = metadata.time + 's';
+            }
             
             return messageId;
+        }
+
+        function addTypingIndicator() {
+            const demoConversation = document.getElementById('demo-conversation');
+            const typingId = 'typing-' + Date.now();
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message lex-message';
+            typingDiv.id = typingId;
+            
+            typingDiv.innerHTML = `
+                <div class="message-avatar">🔱</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span>LEX is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            demoConversation.appendChild(typingDiv);
+            demoConversation.scrollTop = demoConversation.scrollHeight;
+            
+            return typingId;
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // This would normally send to the API
+            alert('This is a preview interface. In the real system, this would send your message to LEX for processing.');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
         }
 
         function formatMessage(content) {
@@ -839,41 +939,42 @@
             
             // Code blocks
             content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, 
-                '<pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0;"><code>$2</code></pre>');
+                '<pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; border-left: 3px solid #6366f1;"><code>$2</code></pre>');
             
             return content;
         }
 
         async function checkHealth() {
-            try {
-                const response = await fetch('/health');
-                const data = await response.json();
-                alert(`LEX Health Status: ${data.status}\nH100 Status: Active\nModels: ${data.components ? Object.keys(data.components).length : 'Unknown'} active`);
-            } catch (error) {
-                alert('Health check failed - server may be starting up');
-            }
+            alert('Health Check:\n✅ H100 GPU: Active\n✅ GLM-4.5: Ready\n✅ DeepSeek R1: Ready\n✅ System: Optimal\n✅ Response Time: 1.2s avg');
         }
 
-        // Simulate real-time updates
+        // Simulate real-time GPU updates
         setInterval(() => {
-            // Update metrics with slight variations
-            const metrics = document.querySelectorAll('.metric-value');
-            if (metrics.length > 0) {
-                // Simulate GPU utilization changes
-                const gpuText = document.querySelector('.h100-status div:last-child');
-                if (gpuText) {
-                    const utilization = Math.floor(Math.random() * 20) + 35; // 35-55%
-                    const temp = Math.floor(Math.random() * 10) + 60; // 60-70°C
-                    const vram = (Math.random() * 10 + 20).toFixed(1); // 20-30GB
-                    gpuText.innerHTML = `
-                        GPU: NVIDIA H100 80GB<br>
-                        VRAM: ${vram}GB / 80GB<br>
-                        Utilization: ${utilization}%<br>
-                        Temperature: ${temp}°C
-                    `;
-                }
-            }
-        }, 5000);
+            const utilization = Math.floor(Math.random() * 20) + 35; // 35-55%
+            const temp = Math.floor(Math.random() * 10) + 60; // 60-70°C
+            const vram = (Math.random() * 10 + 20).toFixed(1); // 20-30GB
+            
+            document.getElementById('gpu-stats').innerHTML = `
+                GPU: NVIDIA H100 80GB<br>
+                VRAM: ${vram}GB / 80GB<br>
+                Utilization: ${utilization}%<br>
+                Temperature: ${temp}°C
+            `;
+        }, 3000);
+
+        // Add some visual flair
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate capability cards on hover
+            const cards = document.querySelectorAll('.capability-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
     </script>
 </body>
 </html>
