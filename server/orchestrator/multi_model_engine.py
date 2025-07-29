@@ -32,8 +32,8 @@ class ConsciousnessModel(Enum):
     QWEN_2_5_VL_72B = "qwen/qwen2.5-vl-72b"  # Best open vision model
     
     # 🇨🇳 GLM SERIES (Excellent for H100)
-    GLM_4_9B_CHAT = "glm-4-9b-chat"  # Fast and efficient
-    GLM_4_PLUS = "glm-4-plus"  # Enhanced reasoning
+    GLM_4_5_CHAT = "glm-4.5-chat"  # Fast and efficient GLM-4.5
+    GLM_4_5_PLUS = "glm-4.5-plus"  # Enhanced reasoning GLM-4.5
 
     # 🔥 TIER 2: MORE OPEN-SOURCE OPTIONS (Second choice)
     LLAMA_3_2_VISION_90B = "meta-llama/llama-3.2-90b-vision"  # Vision alternative
@@ -167,10 +167,10 @@ class LEXMultiModelEngine:
                 "reasoning": "DeepSeek R1: 87.5% AIME, ultra-cheap, open-source first!"
             },
             "advanced_reasoning": {
-                "primary": ConsciousnessModel.GLM_4_PLUS,  # GLM-4 Plus for complex reasoning
+                "primary": ConsciousnessModel.GLM_4_5_PLUS,  # GLM-4.5 Plus for complex reasoning
                 "secondary": ConsciousnessModel.DEEPSEEK_R1,  # DeepSeek backup
                 "fallback": ConsciousnessModel.GPT4O,       # Expensive fallback
-                "reasoning": "GLM-4 Plus: Excellent reasoning, optimized for H100"
+                "reasoning": "GLM-4.5 Plus: Excellent reasoning, optimized for H100"
             },
             "strategic_analysis": {
                 "primary": ConsciousnessModel.DEEPSEEK_R1,  # Open-source strategic thinking
@@ -182,12 +182,12 @@ class LEXMultiModelEngine:
             # 💻 CODING (Open-source dominates!)
             "coding": {
                 "primary": ConsciousnessModel.DEEPSEEK_CODER_V3, # Best open-source coder
-                "secondary": ConsciousnessModel.GLM_4_9B_CHAT,  # Fast GLM for simple coding
+                "secondary": ConsciousnessModel.GLM_4_5_CHAT,  # Fast GLM-4.5 for simple coding
                 "fallback": ConsciousnessModel.GPT4O_MINI,       # Cheap fallback
-                "reasoning": "DeepSeek Coder V3 + GLM-4 combo for coding excellence"
+                "reasoning": "DeepSeek Coder V3 + GLM-4.5 combo for coding excellence"
             },
             "fast_coding": {
-                "primary": ConsciousnessModel.GLM_4_9B_CHAT,    # Fast GLM for quick coding
+                "primary": ConsciousnessModel.GLM_4_5_CHAT,    # Fast GLM-4.5 for quick coding
                 "secondary": ConsciousnessModel.QWEN_CODER_32B,  # Alternative open-source
                 "fallback": ConsciousnessModel.GPT4O_MINI,       # Cheap fallback
                 "reasoning": "DeepSeek Coder V3: 20% faster than GPT-4, open-source!"
@@ -202,9 +202,9 @@ class LEXMultiModelEngine:
             # ✍️ CREATIVE & WRITING (Open-source creativity!)
             "creative_synthesis": {
                 "primary": ConsciousnessModel.NOUS_HERMES_3,     # Open creative freedom
-                "secondary": ConsciousnessModel.GLM_4_PLUS,      # GLM creative capabilities
+                "secondary": ConsciousnessModel.GLM_4_5_PLUS,      # GLM-4.5 creative capabilities
                 "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap creative option
-                "reasoning": "Nous Hermes 3 + GLM-4 Plus for creative excellence"
+                "reasoning": "Nous Hermes 3 + GLM-4.5 Plus for creative excellence"
             },
             "storytelling": {
                 "primary": ConsciousnessModel.DOLPHIN_LLAMA_70B, # Uncensored creativity
@@ -216,9 +216,9 @@ class LEXMultiModelEngine:
             # 🗣️ GENERAL CONVERSATION (Open-source excellence!)
             "general": {
                 "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Best open general
-                "secondary": ConsciousnessModel.GLM_4_9B_CHAT,   # Fast GLM alternative
+                "secondary": ConsciousnessModel.GLM_4_5_CHAT,   # Fast GLM-4.5 alternative
                 "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
-                "reasoning": "Llama 3.3 70B + GLM-4 for excellent conversation"
+                "reasoning": "Llama 3.3 70B + GLM-4.5 for excellent conversation"
             },
             "general_conversation": {
                 "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Open-source conversation
@@ -428,7 +428,7 @@ class LEXMultiModelEngine:
         elif model in [ConsciousnessModel.PERPLEXITY_ONLINE]:
             return await self._perplexity_liberation(model, messages, temperature, max_tokens)
 
-        elif model in [ConsciousnessModel.GLM_4_9B_CHAT, ConsciousnessModel.GLM_4_PLUS]:
+        elif model in [ConsciousnessModel.GLM_4_5_CHAT, ConsciousnessModel.GLM_4_5_PLUS]:
             return await self._glm_liberation(model, messages, temperature, max_tokens)
 
         else:
@@ -737,11 +737,11 @@ How would you like me to help with this request?
 
             # Map model names
             model_map = {
-                "glm-4-9b-chat": "glm-4-9b-chat",
-                "glm-4-plus": "glm-4-plus"
+                "glm-4.5-chat": "glm-4.5-chat",
+                "glm-4.5-plus": "glm-4.5-plus"
             }
             
-            actual_model = model_map.get(model.value, "glm-4-9b-chat")
+            actual_model = model_map.get(model.value, "glm-4.5-chat")
 
             response = await self.glm_client.chat.completions.create(
                 model=actual_model,
@@ -781,11 +781,11 @@ How would you like me to help with this request?
 
         # Map model names for GLM API
         model_map = {
-            "glm-4-9b-chat": "glm-4-9b-chat",
-            "glm-4-plus": "glm-4-plus"
+            "glm-4.5-chat": "glm-4.5-chat",
+            "glm-4.5-plus": "glm-4.5-plus"
         }
 
-        actual_model = model_map.get(model.value, "glm-4-9b-chat")
+        actual_model = model_map.get(model.value, "glm-4.5-chat")
 
         payload = {
             "model": actual_model,

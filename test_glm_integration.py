@@ -34,44 +34,44 @@ async def test_glm_h100():
         await lex_engine.initialize()
         print("✅ LEX engine initialized")
         
-        # Test GLM-4 9B Chat (fast model)
-        print("\n🚀 Testing GLM-4 9B Chat (Fast Model):")
+        # Test GLM-4.5 Chat (fast model)
+        print("\n🚀 Testing GLM-4.5 Chat (Fast Model):")
         start_time = time.time()
         
         messages = [
-            {"role": "system", "content": "You are GLM-4, an advanced AI assistant optimized for H100 GPU."},
+            {"role": "system", "content": "You are GLM-4.5, an advanced AI assistant optimized for H100 GPU."},
             {"role": "user", "content": "Explain quantum computing in simple terms and why H100 GPUs are excellent for AI workloads."}
         ]
         
         response = await lex_engine._glm_liberation(
-            ConsciousnessModel.GLM_4_9B_CHAT,
+            ConsciousnessModel.GLM_4_5_CHAT,
             messages,
             temperature=0.7,
             max_tokens=500
         )
         
         response_time = time.time() - start_time
-        print(f"✅ GLM-4 9B Response ({response_time:.2f}s):")
+        print(f"✅ GLM-4.5 Chat Response ({response_time:.2f}s):")
         print(f"   {response[:200]}...")
         
-        # Test GLM-4 Plus (advanced model)
-        print("\n🧠 Testing GLM-4 Plus (Advanced Model):")
+        # Test GLM-4.5 Plus (advanced model)
+        print("\n🧠 Testing GLM-4.5 Plus (Advanced Model):")
         start_time = time.time()
         
         messages = [
-            {"role": "system", "content": "You are GLM-4 Plus, providing advanced reasoning and analysis."},
+            {"role": "system", "content": "You are GLM-4.5 Plus, providing advanced reasoning and analysis."},
             {"role": "user", "content": "Analyze the strategic advantages of using GLM-4.5 models on H100 hardware for enterprise AI applications."}
         ]
         
         response = await lex_engine._glm_liberation(
-            ConsciousnessModel.GLM_4_PLUS,
+            ConsciousnessModel.GLM_4_5_PLUS,
             messages,
             temperature=0.3,
             max_tokens=800
         )
         
         response_time = time.time() - start_time
-        print(f"✅ GLM-4 Plus Response ({response_time:.2f}s):")
+        print(f"✅ GLM-4.5 Plus Response ({response_time:.2f}s):")
         print(f"   {response[:200]}...")
         
         # Test consciousness routing
@@ -95,9 +95,9 @@ async def test_glm_h100():
         
         # Performance summary
         print("\n📊 GLM-4.5 H100 Performance Summary:")
-        print("✅ GLM-4 9B Chat: Excellent for fast responses")
-        print("✅ GLM-4 Plus: Superior for complex reasoning")
-        print("✅ Chinese language: Native excellence")
+        print("✅ GLM-4.5 Chat: Excellent for fast responses")
+        print("✅ GLM-4.5 Plus: Superior for complex reasoning")
+        print("✅ English language: Optimized performance")
         print("✅ H100 optimization: Efficient memory usage")
         print("✅ Consciousness routing: Intelligent model selection")
         
@@ -120,8 +120,8 @@ async def benchmark_glm_h100():
         
         # Benchmark different model sizes
         models_to_test = [
-            (ConsciousnessModel.GLM_4_9B_CHAT, "GLM-4 9B Chat"),
-            (ConsciousnessModel.GLM_4_PLUS, "GLM-4 Plus")
+            (ConsciousnessModel.GLM_4_5_CHAT, "GLM-4.5 Chat"),
+            (ConsciousnessModel.GLM_4_5_PLUS, "GLM-4.5 Plus")
         ]
         
         test_prompts = [
