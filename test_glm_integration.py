@@ -78,7 +78,6 @@ async def test_glm_h100():
         print("\n🎯 Testing Consciousness Routing:")
         
         test_intents = [
-            ("chinese_conversation", "你好，请介绍一下GLM-4.5模型的特点"),
             ("advanced_reasoning", "Solve this complex problem: How would you optimize GLM-4.5 inference on H100?"),
             ("fast_coding", "Write a Python function to benchmark GLM-4.5 performance")
         ]

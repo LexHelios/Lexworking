@@ -206,12 +206,6 @@ class LEXMultiModelEngine:
                 "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap creative option
                 "reasoning": "Nous Hermes 3 + GLM-4 Plus for creative excellence"
             },
-            "chinese_creative": {
-                "primary": ConsciousnessModel.GLM_4_PLUS,        # Best for Chinese content
-                "secondary": ConsciousnessModel.LLAMA_3_3_70B,   # General open-source
-                "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap creative option
-                "reasoning": "Nous Hermes 3: Best open creative model, no Claude needed!"
-            },
             "storytelling": {
                 "primary": ConsciousnessModel.DOLPHIN_LLAMA_70B, # Uncensored creativity
                 "secondary": ConsciousnessModel.NOUS_HERMES_MIXTRAL, # Creative freedom
@@ -226,12 +220,6 @@ class LEXMultiModelEngine:
                 "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
                 "reasoning": "Llama 3.3 70B + GLM-4 for excellent conversation"
             },
-            "chinese_conversation": {
-                "primary": ConsciousnessModel.GLM_4_PLUS,        # Best for Chinese
-                "secondary": ConsciousnessModel.DEEPSEEK_R1,     # Reasoning backup
-                "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
-                "reasoning": "Llama 3.3 70B: Best open-source general model, free to use!"
-            },
             "general_conversation": {
                 "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Open-source conversation
                 "secondary": ConsciousnessModel.QWEN_2_5_72B,    # Multilingual open
@@ -245,12 +233,6 @@ class LEXMultiModelEngine:
                 "secondary": ConsciousnessModel.LLAMA_3_3_70B,   # General multilingual
                 "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap multilingual
                 "reasoning": "Qwen 2.5 72B: Best multilingual open-source model"
-            },
-            "chinese_language": {
-                "primary": ConsciousnessModel.GLM_4_PLUS,        # Native Chinese excellence
-                "secondary": ConsciousnessModel.QWEN_2_5_72B,    # Chinese alternative
-                "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Multilingual fallback
-                "reasoning": "GLM-4 Plus: Native Chinese language model excellence"
             },
 
             # 🔍 RESEARCH (Open-source research!)
