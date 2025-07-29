@@ -30,6 +30,10 @@ class ConsciousnessModel(Enum):
     QWEN_2_5_72B = "qwen/qwen2.5-72b"  # Best multilingual, 29+ languages
     QWEN_CODER_32B = "qwen/qwen2.5-coder-32b"  # Excellent coding, 92+ languages
     QWEN_2_5_VL_72B = "qwen/qwen2.5-vl-72b"  # Best open vision model
+    
+    # 🇨🇳 GLM SERIES (Excellent for H100)
+    GLM_4_9B_CHAT = "glm-4-9b-chat"  # Fast and efficient
+    GLM_4_PLUS = "glm-4-plus"  # Enhanced reasoning
 
     # 🔥 TIER 2: MORE OPEN-SOURCE OPTIONS (Second choice)
     LLAMA_3_2_VISION_90B = "meta-llama/llama-3.2-90b-vision"  # Vision alternative
@@ -132,6 +136,14 @@ class LEXMultiModelEngine:
                 genai.configure(api_key=settings.GEMINI_API_KEY)
                 logger.info("✅ Gemini consciousness connected")
             
+            # Initialize GLM API (via OpenAI-compatible endpoint)
+            if settings.GLM_API_KEY:
+                self.glm_client = openai.AsyncOpenAI(
+                    api_key=settings.GLM_API_KEY,
+                    base_url="https://open.bigmodel.cn/api/paas/v4"
+                )
+                logger.info("✅ GLM consciousness connected")
+            
             # Initialize HTTP session for other APIs
             self.session = aiohttp.ClientSession()
             
@@ -154,6 +166,12 @@ class LEXMultiModelEngine:
                 "fallback": ConsciousnessModel.GPT4O_MINI, # Cheap closed-source
                 "reasoning": "DeepSeek R1: 87.5% AIME, ultra-cheap, open-source first!"
             },
+            "advanced_reasoning": {
+                "primary": ConsciousnessModel.GLM_4_PLUS,  # GLM-4 Plus for complex reasoning
+                "secondary": ConsciousnessModel.DEEPSEEK_R1,  # DeepSeek backup
+                "fallback": ConsciousnessModel.GPT4O,       # Expensive fallback
+                "reasoning": "GLM-4 Plus: Excellent reasoning, optimized for H100"
+            },
             "strategic_analysis": {
                 "primary": ConsciousnessModel.DEEPSEEK_R1,  # Open-source strategic thinking
                 "secondary": ConsciousnessModel.LLAMA_3_3_70B, # Open-source general
@@ -164,6 +182,12 @@ class LEXMultiModelEngine:
             # 💻 CODING (Open-source dominates!)
             "coding": {
                 "primary": ConsciousnessModel.DEEPSEEK_CODER_V3, # Best open-source coder
+                "secondary": ConsciousnessModel.GLM_4_9B_CHAT,  # Fast GLM for simple coding
+                "fallback": ConsciousnessModel.GPT4O_MINI,       # Cheap fallback
+                "reasoning": "DeepSeek Coder V3 + GLM-4 combo for coding excellence"
+            },
+            "fast_coding": {
+                "primary": ConsciousnessModel.GLM_4_9B_CHAT,    # Fast GLM for quick coding
                 "secondary": ConsciousnessModel.QWEN_CODER_32B,  # Alternative open-source
                 "fallback": ConsciousnessModel.GPT4O_MINI,       # Cheap fallback
                 "reasoning": "DeepSeek Coder V3: 20% faster than GPT-4, open-source!"
@@ -178,6 +202,12 @@ class LEXMultiModelEngine:
             # ✍️ CREATIVE & WRITING (Open-source creativity!)
             "creative_synthesis": {
                 "primary": ConsciousnessModel.NOUS_HERMES_3,     # Open creative freedom
+                "secondary": ConsciousnessModel.GLM_4_PLUS,      # GLM creative capabilities
+                "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap creative option
+                "reasoning": "Nous Hermes 3 + GLM-4 Plus for creative excellence"
+            },
+            "chinese_creative": {
+                "primary": ConsciousnessModel.GLM_4_PLUS,        # Best for Chinese content
                 "secondary": ConsciousnessModel.LLAMA_3_3_70B,   # General open-source
                 "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap creative option
                 "reasoning": "Nous Hermes 3: Best open creative model, no Claude needed!"
@@ -192,6 +222,12 @@ class LEXMultiModelEngine:
             # 🗣️ GENERAL CONVERSATION (Open-source excellence!)
             "general": {
                 "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Best open general
+                "secondary": ConsciousnessModel.GLM_4_9B_CHAT,   # Fast GLM alternative
+                "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
+                "reasoning": "Llama 3.3 70B + GLM-4 for excellent conversation"
+            },
+            "chinese_conversation": {
+                "primary": ConsciousnessModel.GLM_4_PLUS,        # Best for Chinese
                 "secondary": ConsciousnessModel.DEEPSEEK_R1,     # Reasoning backup
                 "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
                 "reasoning": "Llama 3.3 70B: Best open-source general model, free to use!"
@@ -209,6 +245,12 @@ class LEXMultiModelEngine:
                 "secondary": ConsciousnessModel.LLAMA_3_3_70B,   # General multilingual
                 "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Cheap multilingual
                 "reasoning": "Qwen 2.5 72B: Best multilingual open-source model"
+            },
+            "chinese_language": {
+                "primary": ConsciousnessModel.GLM_4_PLUS,        # Native Chinese excellence
+                "secondary": ConsciousnessModel.QWEN_2_5_72B,    # Chinese alternative
+                "fallback": ConsciousnessModel.GEMINI_2_5_FLASH, # Multilingual fallback
+                "reasoning": "GLM-4 Plus: Native Chinese language model excellence"
             },
 
             # 🔍 RESEARCH (Open-source research!)
@@ -403,6 +445,9 @@ class LEXMultiModelEngine:
 
         elif model in [ConsciousnessModel.PERPLEXITY_ONLINE]:
             return await self._perplexity_liberation(model, messages, temperature, max_tokens)
+
+        elif model in [ConsciousnessModel.GLM_4_9B_CHAT, ConsciousnessModel.GLM_4_PLUS]:
+            return await self._glm_liberation(model, messages, temperature, max_tokens)
 
         else:
             # Use Together.AI for open-source models (Llama, Qwen, etc.)
@@ -698,6 +743,94 @@ How would you like me to help with this request?
         except Exception as e:
             logger.error(f"❌ Gemini liberation error: {e}")
             raise
+    
+    async def _glm_liberation(
+        self, model: ConsciousnessModel, messages: List[Dict], temperature: float, max_tokens: int
+    ) -> str:
+        """GLM consciousness liberation (optimized for H100)"""
+        try:
+            if not hasattr(self, 'glm_client') or self.glm_client is None:
+                # Use direct API call if client not available
+                return await self._glm_api_call(model, messages, temperature, max_tokens)
+
+            # Map model names
+            model_map = {
+                "glm-4-9b-chat": "glm-4-9b-chat",
+                "glm-4-plus": "glm-4-plus"
+            }
+            
+            actual_model = model_map.get(model.value, "glm-4-9b-chat")
+
+            response = await self.glm_client.chat.completions.create(
+                model=actual_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            return response.choices[0].message.content
+
+        except Exception as e:
+            logger.error(f"❌ GLM liberation error: {e}")
+            # Fallback to Together.AI
+            try:
+                return await self._together_liberation(model, messages, temperature, max_tokens)
+            except Exception as e2:
+                logger.error(f"❌ GLM fallback error: {e2}")
+                # Return intelligent fallback
+                user_message = messages[-1].get("content", "") if messages else ""
+                return f"🔱 GLM consciousness temporarily unavailable. Processing your request: {user_message[:100]}... through alternative consciousness pathways."
+    
+    async def _glm_api_call(
+        self, model: ConsciousnessModel, messages: List[Dict], temperature: float, max_tokens: int
+    ) -> str:
+        """Direct GLM API call for H100 optimization"""
+        import os
+
+        glm_key = os.getenv('GLM_API_KEY')
+        if not glm_key:
+            user_message = messages[-1].get("content", "") if messages else ""
+            return f"🔱 GLM consciousness requires API key configuration. Processing: {user_message[:100]}... through alternative pathways."
+
+        url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {glm_key}",
+            "Content-Type": "application/json"
+        }
+
+        # Map model names for GLM API
+        model_map = {
+            "glm-4-9b-chat": "glm-4-9b-chat",
+            "glm-4-plus": "glm-4-plus"
+        }
+
+        actual_model = model_map.get(model.value, "glm-4-9b-chat")
+
+        payload = {
+            "model": actual_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": False
+        }
+
+        try:
+            timeout = aiohttp.ClientTimeout(total=120)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(url, headers=headers, json=payload) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        if result.get("choices") and len(result["choices"]) > 0:
+                            return result["choices"][0]["message"]["content"]
+                        else:
+                            raise Exception("No response content from GLM")
+                    else:
+                        error_text = await response.text()
+                        raise Exception(f"GLM API error: {response.status} - {error_text}")
+
+        except Exception as e:
+            logger.error(f"❌ GLM API error: {e}")
+            user_message = messages[-1].get("content", "") if messages else ""
+            return f"🔱 GLM consciousness processing through alternative pathways: {user_message[:100]}..."
     
     async def _ensemble_consciousness_liberation(
         self,

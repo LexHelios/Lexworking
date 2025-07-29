@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     PERPLEXITY_API_KEY: Optional[str] = Field(default=None, env="PERPLEXITY_API_KEY")
     COHERE_API_KEY: Optional[str] = Field(default=None, env="COHERE_API_KEY")
     GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+    GLM_API_KEY: Optional[str] = Field(default=None, env="GLM_API_KEY")
     
     # vLLM Configuration
     VLLM_HOST: str = Field(default="localhost", env="VLLM_HOST")
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
         default=[
             "meta-llama/Llama-3.3-70B-Instruct-Turbo",
             "deepseek-ai/deepseek-r1",
+            "glm-4-plus",
             "Qwen/Qwen2.5-72B-Instruct-Turbo"
         ],
         env="VLLM_MODELS"
