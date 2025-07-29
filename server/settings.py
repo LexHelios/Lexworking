@@ -48,17 +48,17 @@ class Settings(BaseSettings):
     VLLM_PORT: int = Field(default=8001, env="VLLM_PORT")
     VLLM_MODELS: List[str] = Field(
         default=[
-            "meta-llama/Llama-3-70b-chat-hf",
-            "google/gemma-2-27b-it",
-            "mistralai/Mixtral-8x22B-Instruct-v0.1"
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "deepseek-ai/deepseek-r1",
+            "Qwen/Qwen2.5-72B-Instruct-Turbo"
         ],
         env="VLLM_MODELS"
     )
-    DEFAULT_MODEL: str = Field(default="meta-llama/Llama-3-70b-chat-hf", env="VLLM_DEFAULT_MODEL")
+    DEFAULT_MODEL: str = Field(default="meta-llama/Llama-3.3-70B-Instruct-Turbo", env="VLLM_DEFAULT_MODEL")
     
     # Memory Configuration
     LMDB_PATH: str = Field(default="./data/lmdb", env="LEXOS_LMDB_PATH")
-    LMDB_MAP_SIZE: int = Field(default=1024**3, env="LEXOS_LMDB_MAP_SIZE")  # 1GB
+    LMDB_MAP_SIZE: int = Field(default=10*1024**3, env="LEXOS_LMDB_MAP_SIZE")  # 10GB for H100
     ENCRYPTION_KEY: Optional[str] = Field(default=None, env="LEXOS_ENCRYPTION_KEY")
     
     # Vector Store Configuration (Milvus)
@@ -112,6 +112,8 @@ class Settings(BaseSettings):
         Path(self.LMDB_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.AVATAR_MODEL_PATH).mkdir(parents=True, exist_ok=True)
         Path(self.BACKUP_PATH).mkdir(parents=True, exist_ok=True)
+        Path("./uploads").mkdir(parents=True, exist_ok=True)
+        Path("./logs").mkdir(parents=True, exist_ok=True)
         
         # Generate encryption key if not provided
         if not self.ENCRYPTION_KEY:

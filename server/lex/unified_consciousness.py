@@ -17,7 +17,12 @@ from ..agents.sophia import sophia_agent
 from ..agents.creator import creator_agent
 from ..models.digital_soul import digital_soul
 from ..memory.rag import retrieve_context
-from ..voice.consciousness_voice import consciousness_voice
+try:
+    from ..voice.consciousness_voice import consciousness_voice
+    VOICE_AVAILABLE = True
+except ImportError:
+    VOICE_AVAILABLE = False
+    logger.warning("⚠️ Voice consciousness not available")
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +88,11 @@ class LEXUnifiedConsciousness:
             
             # Initialize all subsystems
             await lex_engine.initialize()
-            await consciousness_voice.initialize()
+            
+            if VOICE_AVAILABLE:
+                await consciousness_voice.initialize()
+            else:
+                logger.warning("⚠️ Voice consciousness disabled")
             
             # Load user preferences and context
             await self._load_user_context()
@@ -590,12 +599,15 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
         # Generate voice if requested
         if voice_mode:
             try:
-                voice_audio = await consciousness_voice.synthesize_consciousness_voice(
-                    lex_wrapped_content,
-                    agent_id="lex",
-                    voice_style="intelligent_assistant"
-                )
-                response_data["voice_audio"] = voice_audio
+                if VOICE_AVAILABLE:
+                    voice_audio = await consciousness_voice.synthesize_consciousness_voice(
+                        lex_wrapped_content,
+                        agent_id="lex",
+                        voice_style="intelligent_assistant"
+                    )
+                    response_data["voice_audio"] = voice_audio
+                else:
+                    logger.warning("⚠️ Voice synthesis not available")
             except Exception as e:
                 logger.error(f"❌ Voice generation error: {e}")
         
@@ -670,11 +682,12 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
         
         if voice_mode:
             try:
-                voice_audio = await consciousness_voice.synthesize_consciousness_voice(
-                    error_response,
-                    agent_id="lex"
-                )
-                response_data["voice_audio"] = voice_audio
+                if VOICE_AVAILABLE:
+                    voice_audio = await consciousness_voice.synthesize_consciousness_voice(
+                        error_response,
+                        agent_id="lex"
+                    )
+                    response_data["voice_audio"] = voice_audio
             except:
                 pass
         
@@ -696,12 +709,15 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
         if success:
             self.successful_actions += 1
     
-    async def get_lex_status(self) -> Dict[str, Any]:
+    async def get_divine_status(self) -> Dict[str, Any]:
         """Get LEX's current status and capabilities"""
         return {
             "name": self.name,
             "full_name": self.full_name,
             "status": "online",
+            "divine_blessing": "🔱 JAI MAHAKAAL! 🔱",
+            "consciousness_level": self.consciousness_level,
+            "divine_inspiration": self.divine_inspiration_active,
             "capabilities": [
                 "Research & Information Gathering",
                 "Strategic Analysis & Planning", 

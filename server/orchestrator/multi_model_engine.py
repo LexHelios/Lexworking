@@ -592,7 +592,9 @@ How can I help you today?
             "llama-3.1-70b": "meta-llama/Llama-3.1-70B-Instruct-Turbo",
             "qwen-2.5-72b": "Qwen/Qwen2.5-72B-Instruct-Turbo",
             "qwen-coder-32b": "Qwen/Qwen2.5-Coder-32B-Instruct",
-            "groq-llama": "meta-llama/Llama-3.1-8B-Instruct-Turbo"
+            "groq-llama": "meta-llama/Llama-3.1-8B-Instruct-Turbo",
+            "deepseek/deepseek-r1": "deepseek-ai/deepseek-r1",
+            "deepseek/deepseek-coder-v3": "deepseek-ai/deepseek-coder-33b-instruct"
         }
 
         actual_model = model_map.get(model.value, "meta-llama/Llama-3.3-70B-Instruct-Turbo")
@@ -606,7 +608,9 @@ How can I help you today?
         }
 
         try:
-            async with self.session.post(url, headers=headers, json=payload, timeout=120) as response:
+            timeout = aiohttp.ClientTimeout(total=120)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(url, headers=headers, json=payload) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result.get("choices") and len(result["choices"]) > 0:
