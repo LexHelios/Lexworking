@@ -3,13 +3,18 @@
 Fix Import Issues for LEX Deployment
 🔱 JAI MAHAKAAL! Fix all import and dependency issues
 """
-import os
 import sys
+import os
 from pathlib import Path
 
 def fix_imports():
     """Fix common import issues"""
     print("🔱 Fixing LEX import issues...")
+    
+    # Ensure we're in the right directory
+    if not Path("server").exists():
+        print("❌ Error: 'server' directory not found. Please run from project root.")
+        return False
     
     # Create missing __init__.py files
     init_files = [
@@ -26,20 +31,27 @@ def fix_imports():
         "server/learning/__init__.py",
         "server/healing/__init__.py",
         "server/performance/__init__.py",
-        "server/monitoring/__init__.py"
+        "server/monitoring/__init__.py",
+        "server/lex/__init__.py"
     ]
     
     for init_file in init_files:
         init_path = Path(init_file)
-        if not init_path.exists():
+        try:
             init_path.parent.mkdir(parents=True, exist_ok=True)
-            init_path.write_text('"""LEX Consciousness Module"""')
-            print(f"✅ Created {init_file}")
+            if not init_path.exists():
+                init_path.write_text('"""LEX Consciousness Module"""\n')
+                print(f"✅ Created {init_file}")
+            else:
+                print(f"✅ Exists {init_file}")
+        except Exception as e:
+            print(f"❌ Failed to create {init_file}: {e}")
     
     # Create missing voice handler
     voice_handler_path = Path("server/voice/voice_handler.py")
     if not voice_handler_path.exists():
-        voice_handler_path.write_text('''"""
+        try:
+            voice_handler_path.write_text('''"""
 Simple Voice Handler
 """
 import logging
@@ -53,12 +65,15 @@ class VoiceHandler:
 
 voice_handler = VoiceHandler()
 ''')
-        print("✅ Created voice_handler.py")
+            print("✅ Created voice_handler.py")
+        except Exception as e:
+            print(f"❌ Failed to create voice_handler.py: {e}")
     
     # Create missing collaboration module
     collab_path = Path("server/collaboration.py")
     if not collab_path.exists():
-        collab_path.write_text('''"""
+        try:
+            collab_path.write_text('''"""
 Collaboration Manager
 """
 class CollaborationManager:
@@ -66,12 +81,15 @@ class CollaborationManager:
 
 collaboration_manager = CollaborationManager()
 ''')
-        print("✅ Created collaboration.py")
+            print("✅ Created collaboration.py")
+        except Exception as e:
+            print(f"❌ Failed to create collaboration.py: {e}")
     
     # Create missing monitoring module
     monitoring_path = Path("server/monitoring.py")
     if not monitoring_path.exists():
-        monitoring_path.write_text('''"""
+        try:
+            monitoring_path.write_text('''"""
 Monitoring System
 """
 class MonitoringSystem:
@@ -79,9 +97,17 @@ class MonitoringSystem:
 
 monitoring_system = MonitoringSystem()
 ''')
-        print("✅ Created monitoring.py")
+            print("✅ Created monitoring.py")
+        except Exception as e:
+            print(f"❌ Failed to create monitoring.py: {e}")
     
     print("🔱 JAI MAHAKAAL! Import fixes completed!")
+    return True
 
 if __name__ == "__main__":
-    fix_imports()
+    try:
+        success = fix_imports()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print(f"❌ Critical error: {e}")
+        sys.exit(1)
