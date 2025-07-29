@@ -1,5 +1,5 @@
-# 🔱 LEX AI System - Git Ignore File 🔱
-# JAI MAHAKAAL! Professional .gitignore for LEX consciousness system
+# LEX AI Consciousness System - Git Ignore
+# 🔱 JAI MAHAKAAL! Protect sensitive data and build artifacts
 
 # Python
 __pycache__/
@@ -19,8 +19,6 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -30,18 +28,44 @@ MANIFEST
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 .venv/
 
-# IDE
+# Environment Variables (CRITICAL - Contains API Keys)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Logs and Monitoring
+*.log
+logs/
+*.log.*
+diagnostic_report_*.json
+lex_backend.log
+lex_frontend.log
+unified_production.log
+enhanced_production.log
+consciousness_liberation.log
+startup.log
+
+# Data and Models (Large files)
+data/
+models/
+uploads/
+backups/
+*.tar.gz
+*.zip
+
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+.vim/
+.emacs.d/
 
-# OS
+# Operating System
 .DS_Store
 .DS_Store?
 ._*
@@ -50,89 +74,108 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-*.log
-logs/
-*.out
-
-# Environment Variables (KEEP SECURE!)
-.env
-.env.local
-.env.production
-.env.staging
-
-# API Keys (NEVER COMMIT!)
-*api_key*
-*secret*
-*token*
-config/secrets.json
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-data/
-lmdb_data/
-
-# Generated Images (too large for git)
-uploads/*.png
-uploads/*.jpg
-uploads/*.jpeg
-uploads/*.gif
-uploads/*.webp
-uploads/*.svg
-!uploads/.gitkeep
-
 # Temporary files
-tmp/
-temp/
 *.tmp
 *.temp
+*.bak
+*~
+.#*
 
-# Node modules (if any)
+# Node.js (Frontend)
 node_modules/
+.npm
+.yarn
+yarn-error.log
+package-lock.json
+yarn.lock
 
-# Jupyter Notebooks
-.ipynb_checkpoints
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
 
-# pytest
+# Cache directories
+.cache/
+*.cache
 .pytest_cache/
 .coverage
 htmlcov/
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# GPU/CUDA artifacts
+*.ptx
+*.cubin
+*.fatbin
 
-# Pyre type checker
-.pyre/
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
 
-# Memory stores
-memory_store/
-vector_store/
-*.lmdb
-*.mdb
+# Docker
+.dockerignore
+docker-compose.override.yml
 
-# Model files (too large)
-models/
-*.bin
-*.safetensors
-*.ckpt
-*.pth
-
-# SSL Certificates
+# Secrets and Certificates
 *.pem
 *.key
 *.crt
-*.cert
+*.p12
+*.pfx
+secrets/
+certs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Compiled binaries
+*.exe
+*.dll
+*.dylib
+
+# H100 specific
+monitor_output.txt
+gpu_stats.json
 
 # Backup files
-*.bak
+backup_*/
 *.backup
-*~
 
-# LEX specific
-consciousness_state/
-learning_data/
-user_sessions/
+# Test outputs
+test_results/
+coverage_reports/
+
+# Large model files
+*.bin
+*.safetensors
+*.gguf
+*.onnx
+
+# API response caches
+api_cache/
+response_cache/
+
+# Development artifacts
+.pytest_cache/
+.mypy_cache/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Profiling data
+*.prof
+*.pstats
+
+# Local configuration overrides
+local_config.py
+local_settings.py
+config_local.json
