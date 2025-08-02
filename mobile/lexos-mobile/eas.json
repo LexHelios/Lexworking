@@ -1,25 +1,79 @@
+
 {
   "cli": {
-    "version": ">= 3.0.0"
+    "version": ">= 5.9.0"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium"
+      }
     },
     "preview": {
-      "android": {
-        "buildType": "apk"
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "simulator": true,
+        "buildConfiguration": "Release"
       },
-      "distribution": "internal"
+      "android": {
+        "resourceClass": "medium",
+        "buildType": "apk"
+      }
     },
     "production": {
+      "ios": {
+        "resourceClass": "m-large",
+        "buildConfiguration": "Release",
+        "scheme": "LexOS",
+        "config": "app.config.production.js"
+      },
       "android": {
-        "buildType": "app-bundle"
+        "resourceClass": "large",
+        "buildType": "aab",
+        "config": "app.config.production.js"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.lexos.ai",
+        "EXPO_PUBLIC_WS_URL": "wss://api.lexos.ai/ws",
+        "EXPO_PUBLIC_CDN_URL": "https://cdn.lexos.ai"
+      }
+    },
+    "production-apk": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@lexos.ai",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed"
+      }
+    },
+    "preview": {
+      "ios": {
+        "appleId": "your-apple-id@lexos.ai",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

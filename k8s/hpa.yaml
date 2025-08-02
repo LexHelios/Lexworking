@@ -1,0 +1,139 @@
+
+# Horizontal Pod Autoscaler for LexOS API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lexos-api-hpa
+  namespace: lexos
+  labels:
+    app: lexos-api
+    version: "2.0.0"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lexos-api
+  
+  # Scaling Configuration
+  minReplicas: 1
+  maxReplicas: 3  # Limited due to H100 GPU availability
+  
+  # Scaling Behavior
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 minutes
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1 minute
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Max
+  
+  # Metrics for Scaling Decisions
+  metrics:
+  # CPU Utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  # Memory Utilization
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  # GPU Utilization (Custom Metric)
+  - type: Pods
+    pods:
+      metric:
+        name: gpu_utilization_percentage
+      target:
+        type: AverageValue
+        averageValue: "75"
+  
+  # Request Rate (Custom Metric)
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  
+  # Response Time (Custom Metric)
+  - type: Pods
+    pods:
+      metric:
+        name: http_request_duration_seconds
+      target:
+        type: AverageValue
+        averageValue: "2"
+
+---
+# Vertical Pod Autoscaler (VPA) for resource optimization
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: lexos-api-vpa
+  namespace: lexos
+  labels:
+    app: lexos-api
+    version: "2.0.0"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lexos-api
+  
+  updatePolicy:
+    updateMode: "Auto"  # Automatically apply recommendations
+    minReplicas: 1
+  
+  resourcePolicy:
+    containerPolicies:
+    - containerName: lexos-api
+      minAllowed:
+        memory: "16Gi"
+        cpu: "4"
+      maxAllowed:
+        memory: "128Gi"
+        cpu: "32"
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+    
+    - containerName: gpu-monitor
+      minAllowed:
+        memory: "64Mi"
+        cpu: "50m"
+      maxAllowed:
+        memory: "512Mi"
+        cpu: "500m"
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+    
+    - containerName: log-shipper
+      minAllowed:
+        memory: "32Mi"
+        cpu: "25m"
+      maxAllowed:
+        memory: "256Mi"
+        cpu: "200m"
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
