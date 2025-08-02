@@ -1,41 +1,153 @@
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: lexos-config
   namespace: lexos
+  labels:
+    app: lexos-api
+    version: "2.0.0"
 data:
+  # Core Server Configuration
   LEXOS_HOST: "0.0.0.0"
   LEXOS_PORT: "8000"
   LEXOS_DEBUG: "false"
   LEXOS_LOG_LEVEL: "INFO"
-  REDIS_URL: "redis://redis-service:6379"
-  MILVUS_HOST: "milvus-service"
+  LEXOS_WORKERS: "4"
+  LEXOS_MAX_WORKERS: "8"
+  LEXOS_WORKER_TIMEOUT: "300"
+  LEXOS_KEEPALIVE: "2"
+  
+  # Security Configuration
+  LEXOS_JWT_ALGORITHM: "HS256"
+  LEXOS_JWT_EXPIRATION_HOURS: "24"
+  LEXOS_JWT_REFRESH_EXPIRATION_DAYS: "7"
+  LEXOS_CORS_ORIGINS: '["https://lexos.ai","https://api.lexos.ai","https://admin.lexos.ai"]'
+  LEXOS_ALLOWED_HOSTS: '["lexos.ai","api.lexos.ai","admin.lexos.ai"]'
+  
+  # Rate Limiting
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS_PER_MINUTE: "60"
+  RATE_LIMIT_BURST: "10"
+  
+  # SSL/TLS Configuration
+  SSL_ENABLED: "true"
+  SSL_CERT_PATH: "/etc/ssl/certs/lexos.crt"
+  SSL_KEY_PATH: "/etc/ssl/private/lexos.key"
+  SSL_CA_PATH: "/etc/ssl/certs/ca-bundle.crt"
+  FORCE_HTTPS: "true"
+  
+  # Database & Storage
+  REDIS_URL: "redis://redis-cluster:6379"
+  REDIS_DB: "0"
+  REDIS_MAX_CONNECTIONS: "100"
+  REDIS_RETRY_ON_TIMEOUT: "true"
+  REDIS_SOCKET_KEEPALIVE: "true"
+  
+  MILVUS_HOST: "milvus-cluster"
   MILVUS_PORT: "19530"
+  MILVUS_SECURE: "true"
+  
+  DATABASE_URL: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres-cluster:5432/lexos_prod"
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "30"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+  
+  # Storage Configuration
+  DATA_DIR: "/app/data"
+  MODELS_DIR: "/app/models"
+  LOGS_DIR: "/app/logs"
+  UPLOAD_MAX_SIZE: "100MB"
+  STORAGE_BACKEND: "s3"
+  
+  # H100 GPU Configuration
+  CUDA_VISIBLE_DEVICES: "0,1,2,3,4,5,6,7"
+  CUDA_MEMORY_FRACTION: "0.9"
+  CUDA_ALLOW_GROWTH: "true"
+  NCCL_DEBUG: "INFO"
+  NCCL_IB_DISABLE: "0"
+  NCCL_NET_GDR_LEVEL: "2"
+  
+  # vLLM H100 Optimized Configuration
   VLLM_HOST: "localhost"
   VLLM_PORT: "8001"
+  VLLM_MODEL: "meta-llama/Llama-2-70b-chat-hf"
+  VLLM_GPU_MEMORY_UTILIZATION: "0.85"
+  VLLM_MAX_MODEL_LEN: "8192"
+  VLLM_TENSOR_PARALLEL_SIZE: "8"
+  VLLM_PIPELINE_PARALLEL_SIZE: "1"
+  VLLM_MAX_NUM_SEQS: "256"
+  VLLM_MAX_NUM_BATCHED_TOKENS: "8192"
+  VLLM_BLOCK_SIZE: "16"
+  VLLM_SWAP_SPACE: "4"
+  VLLM_ENFORCE_EAGER: "false"
+  VLLM_MAX_CONTEXT_LEN_TO_CAPTURE: "8192"
+  
+  # GPU Health Monitoring
+  GPU_HEALTH_CHECK_INTERVAL: "30"
+  GPU_MEMORY_THRESHOLD: "0.95"
+  GPU_TEMPERATURE_THRESHOLD: "85"
+  GPU_UTILIZATION_THRESHOLD: "0.95"
+  
+  # Monitoring & Observability
+  PROMETHEUS_ENABLED: "true"
   PROMETHEUS_PORT: "8002"
-  METRICS_ENABLED: "true"
+  PROMETHEUS_METRICS_PATH: "/metrics"
+  PROMETHEUS_SCRAPE_INTERVAL: "15s"
+  
+  GRAFANA_ENABLED: "true"
+  GRAFANA_PORT: "3000"
+  
+  LOG_FORMAT: "json"
+  LOG_ROTATION: "true"
+  LOG_MAX_SIZE: "100MB"
+  LOG_BACKUP_COUNT: "10"
+  LOG_COMPRESSION: "true"
+  STRUCTURED_LOGGING: "true"
+  
+  # OpenTelemetry Configuration
+  OTEL_ENABLED: "true"
+  OTEL_SERVICE_NAME: "lexos-api"
+  OTEL_SERVICE_VERSION: "2.0.0"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:14268/api/traces"
+  OTEL_RESOURCE_ATTRIBUTES: "service.name=lexos-api,service.version=2.0.0"
+  
+  # Health Checks
+  HEALTH_CHECK_ENABLED: "true"
   HEALTH_CHECK_INTERVAL: "30"
-  DIGITAL_SOUL_ENABLED: "true"
-  MOCK_EXTERNAL_APIS: "false"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: lexos-secrets
-  namespace: lexos
-type: Opaque
-stringData:
-  # These will be provided when you're ready to deploy
-  LEXOS_SECRET_KEY: "your-production-secret-key-here"
-  TOGETHER_API_KEY: ""
-  OPENAI_API_KEY: ""
-  ANTHROPIC_API_KEY: ""
-  ELEVENLABS_API_KEY: ""
-  DEEPSEEK_API_KEY: ""
-  DEEPGRAM_API_KEY: ""
-  GROQ_API_KEY: ""
-  OPENROUTER_API_KEY: ""
-  PERPLEXITY_API_KEY: ""
-  COHERE_API_KEY: ""
-  GEMINI_API_KEY: ""
+  HEALTH_CHECK_TIMEOUT: "10"
+  READINESS_CHECK_ENABLED: "true"
+  LIVENESS_CHECK_ENABLED: "true"
+  
+  # Performance & Scaling
+  CONNECTION_POOL_SIZE: "50"
+  CONNECTION_POOL_MAX_OVERFLOW: "100"
+  CONNECTION_POOL_TIMEOUT: "30"
+  CONNECTION_POOL_RECYCLE: "3600"
+  
+  CACHE_ENABLED: "true"
+  CACHE_TTL: "3600"
+  CACHE_MAX_SIZE: "1000"
+  CACHE_BACKEND: "redis"
+  
+  CELERY_BROKER_URL: "redis://redis-cluster:6379"
+  CELERY_RESULT_BACKEND: "redis://redis-cluster:6379"
+  CELERY_WORKER_CONCURRENCY: "4"
+  CELERY_TASK_SOFT_TIME_LIMIT: "300"
+  CELERY_TASK_TIME_LIMIT: "600"
+  
+  # Security Headers
+  SECURITY_HEADERS_ENABLED: "true"
+  HSTS_MAX_AGE: "31536000"
+  HSTS_INCLUDE_SUBDOMAINS: "true"
+  HSTS_PRELOAD: "true"
+  CONTENT_SECURITY_POLICY: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' wss: https:;"
+  X_FRAME_OPTIONS: "DENY"
+  X_CONTENT_TYPE_OPTIONS: "nosniff"
+  REFERRER_POLICY: "strict-origin-when-cross-origin"
+  
+  # Mobile App Configuration
+  MOBILE_API_BASE_URL: "https://api.lexos.ai"
+  MOBILE_WS_URL: "wss://api.lexos.ai/ws"
+  MOBILE_CDN_URL: "https://cdn.lexos.ai"

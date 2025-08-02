@@ -1,3 +1,5 @@
+
+# Persistent Volume Claims for LexOS
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -5,13 +7,15 @@ metadata:
   namespace: lexos
   labels:
     app: lexos-api
+    component: data-storage
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 100Gi
-  storageClassName: fast-ssd  # Adjust based on your storage class
+      storage: 500Gi
+  storageClassName: fast-ssd-retain
+  volumeMode: Filesystem
 
 ---
 apiVersion: v1
@@ -21,26 +25,149 @@ metadata:
   namespace: lexos
   labels:
     app: lexos-api
+    component: models-storage
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Gi  # Large storage for AI models
-  storageClassName: fast-ssd
+      storage: 1Ti  # Large storage for H100 models
+  storageClassName: fast-ssd-retain
+  volumeMode: Filesystem
 
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-data-pvc
+  name: lexos-logs-pvc
   namespace: lexos
   labels:
-    app: redis
+    app: lexos-api
+    component: logs-storage
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
-  storageClassName: fast-ssd
+      storage: 100Gi
+  storageClassName: standard-retain
+  volumeMode: Filesystem
+
+---
+# Storage Class for fast SSD with retention policy
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd-retain
+  labels:
+    app: lexos
+provisioner: kubernetes.io/aws-ebs  # Adjust for your cloud provider
+parameters:
+  type: gp3
+  iops: "16000"
+  throughput: "1000"
+  encrypted: "true"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+---
+# Storage Class for standard storage with retention
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard-retain
+  labels:
+    app: lexos
+provisioner: kubernetes.io/aws-ebs  # Adjust for your cloud provider
+parameters:
+  type: gp3
+  encrypted: "true"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+---
+# Backup Configuration using Velero
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: lexos
+  labels:
+    app: lexos
+    component: backup
+data:
+  backup-schedule.yaml: |
+    apiVersion: velero.io/v1
+    kind: Schedule
+    metadata:
+      name: lexos-daily-backup
+      namespace: lexos
+    spec:
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      template:
+        includedNamespaces:
+        - lexos
+        includedResources:
+        - persistentvolumeclaims
+        - persistentvolumes
+        - secrets
+        - configmaps
+        excludedResources:
+        - events
+        - events.events.k8s.io
+        storageLocation: default
+        volumeSnapshotLocations:
+        - default
+        ttl: 720h0m0s  # 30 days retention
+        hooks:
+          resources:
+          - name: postgres-backup-hook
+            includedNamespaces:
+            - lexos
+            labelSelector:
+              matchLabels:
+                app: postgres
+            pre:
+            - exec:
+                container: postgres
+                command:
+                - /bin/bash
+                - -c
+                - pg_dump -U $POSTGRES_USER $POSTGRES_DB > /backup/backup.sql
+            post:
+            - exec:
+                container: postgres
+                command:
+                - /bin/bash
+                - -c
+                - rm -f /backup/backup.sql
+
+---
+# Weekly backup schedule
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: weekly-backup-config
+  namespace: lexos
+  labels:
+    app: lexos
+    component: backup
+data:
+  weekly-backup-schedule.yaml: |
+    apiVersion: velero.io/v1
+    kind: Schedule
+    metadata:
+      name: lexos-weekly-backup
+      namespace: lexos
+    spec:
+      schedule: "0 3 * * 0"  # Weekly on Sunday at 3 AM
+      template:
+        includedNamespaces:
+        - lexos
+        storageLocation: default
+        volumeSnapshotLocations:
+        - default
+        ttl: 2160h0m0s  # 90 days retention
+        snapshotVolumes: true

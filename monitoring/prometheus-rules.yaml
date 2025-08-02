@@ -1,0 +1,267 @@
+
+# Prometheus Alerting Rules for LexOS Production
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lexos-alerts
+  namespace: lexos
+  labels:
+    app: lexos
+    component: monitoring
+spec:
+  groups:
+  - name: lexos.api
+    interval: 30s
+    rules:
+    # API Health Alerts
+    - alert: LexOSAPIDown
+      expr: up{job="lexos-api"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: api
+      annotations:
+        summary: "LexOS API is down"
+        description: "LexOS API has been down for more than 1 minute"
+        runbook_url: "https://docs.lexos.ai/runbooks/api-down"
+    
+    - alert: LexOSAPIHighLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="lexos-api"}[5m])) > 2
+      for: 5m
+      labels:
+        severity: warning
+        component: api
+      annotations:
+        summary: "LexOS API high latency"
+        description: "95th percentile latency is {{ $value }}s for more than 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/high-latency"
+    
+    - alert: LexOSAPIHighErrorRate
+      expr: rate(http_requests_total{job="lexos-api",status=~"5.."}[5m]) / rate(http_requests_total{job="lexos-api"}[5m]) > 0.05
+      for: 3m
+      labels:
+        severity: critical
+        component: api
+      annotations:
+        summary: "LexOS API high error rate"
+        description: "Error rate is {{ $value | humanizePercentage }} for more than 3 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/high-error-rate"
+    
+    - alert: LexOSAPILowThroughput
+      expr: rate(http_requests_total{job="lexos-api"}[5m]) < 1
+      for: 10m
+      labels:
+        severity: warning
+        component: api
+      annotations:
+        summary: "LexOS API low throughput"
+        description: "Request rate is {{ $value }} requests/sec for more than 10 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/low-throughput"
+
+  - name: lexos.gpu
+    interval: 15s
+    rules:
+    # H100 GPU Alerts
+    - alert: H100GPUHighTemperature
+      expr: DCGM_FI_DEV_GPU_TEMP > 85
+      for: 2m
+      labels:
+        severity: critical
+        component: gpu
+        gpu_type: h100
+      annotations:
+        summary: "H100 GPU {{ $labels.gpu }} high temperature"
+        description: "GPU temperature is {{ $value }}°C for more than 2 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/gpu-overheating"
+    
+    - alert: H100GPUHighMemoryUsage
+      expr: DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL > 0.95
+      for: 5m
+      labels:
+        severity: warning
+        component: gpu
+        gpu_type: h100
+      annotations:
+        summary: "H100 GPU {{ $labels.gpu }} high memory usage"
+        description: "GPU memory usage is {{ $value | humanizePercentage }} for more than 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/gpu-memory-high"
+    
+    - alert: H100GPULowUtilization
+      expr: DCGM_FI_DEV_GPU_UTIL < 30
+      for: 15m
+      labels:
+        severity: info
+        component: gpu
+        gpu_type: h100
+      annotations:
+        summary: "H100 GPU {{ $labels.gpu }} low utilization"
+        description: "GPU utilization is {{ $value }}% for more than 15 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/gpu-underutilized"
+    
+    - alert: H100GPUPowerThrottling
+      expr: DCGM_FI_DEV_POWER_VIOLATION > 0
+      for: 1m
+      labels:
+        severity: warning
+        component: gpu
+        gpu_type: h100
+      annotations:
+        summary: "H100 GPU {{ $labels.gpu }} power throttling"
+        description: "GPU is experiencing power throttling"
+        runbook_url: "https://docs.lexos.ai/runbooks/gpu-power-throttling"
+    
+    - alert: H100GPUMemoryErrors
+      expr: increase(DCGM_FI_DEV_ECC_DBE_VOL_TOTAL[5m]) > 0
+      for: 0m
+      labels:
+        severity: critical
+        component: gpu
+        gpu_type: h100
+      annotations:
+        summary: "H100 GPU {{ $labels.gpu }} memory errors detected"
+        description: "GPU has {{ $value }} double-bit ECC errors in the last 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/gpu-memory-errors"
+
+  - name: lexos.infrastructure
+    interval: 30s
+    rules:
+    # Infrastructure Alerts
+    - alert: RedisClusterDown
+      expr: up{job="redis-cluster"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: redis
+      annotations:
+        summary: "Redis cluster node down"
+        description: "Redis cluster node {{ $labels.instance }} has been down for more than 1 minute"
+        runbook_url: "https://docs.lexos.ai/runbooks/redis-down"
+    
+    - alert: RedisHighMemoryUsage
+      expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        component: redis
+      annotations:
+        summary: "Redis high memory usage"
+        description: "Redis memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+        runbook_url: "https://docs.lexos.ai/runbooks/redis-memory-high"
+    
+    - alert: PostgreSQLDown
+      expr: up{job="postgres"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: postgres
+      annotations:
+        summary: "PostgreSQL is down"
+        description: "PostgreSQL has been down for more than 1 minute"
+        runbook_url: "https://docs.lexos.ai/runbooks/postgres-down"
+    
+    - alert: HighDiskUsage
+      expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        component: storage
+      annotations:
+        summary: "High disk usage on {{ $labels.instance }}"
+        description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.device }}"
+        runbook_url: "https://docs.lexos.ai/runbooks/disk-space-low"
+    
+    - alert: HighCPUUsage
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+      for: 10m
+      labels:
+        severity: warning
+        component: compute
+      annotations:
+        summary: "High CPU usage on {{ $labels.instance }}"
+        description: "CPU usage is {{ $value }}% for more than 10 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/cpu-high"
+    
+    - alert: HighMemoryUsage
+      expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        component: memory
+      annotations:
+        summary: "High memory usage on {{ $labels.instance }}"
+        description: "Memory usage is {{ $value | humanizePercentage }} for more than 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/memory-high"
+
+  - name: lexos.vllm
+    interval: 30s
+    rules:
+    # vLLM Performance Alerts
+    - alert: vLLMHighLatency
+      expr: histogram_quantile(0.95, rate(vllm_request_duration_seconds_bucket[5m])) > 10
+      for: 3m
+      labels:
+        severity: warning
+        component: vllm
+      annotations:
+        summary: "vLLM high inference latency"
+        description: "95th percentile inference latency is {{ $value }}s for more than 3 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/vllm-high-latency"
+    
+    - alert: vLLMQueueBacklog
+      expr: vllm_queue_size > 100
+      for: 2m
+      labels:
+        severity: warning
+        component: vllm
+      annotations:
+        summary: "vLLM request queue backlog"
+        description: "vLLM queue has {{ $value }} pending requests for more than 2 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/vllm-queue-backlog"
+    
+    - alert: vLLMOOMErrors
+      expr: increase(vllm_oom_errors_total[5m]) > 0
+      for: 0m
+      labels:
+        severity: critical
+        component: vllm
+      annotations:
+        summary: "vLLM out of memory errors"
+        description: "vLLM has {{ $value }} OOM errors in the last 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/vllm-oom"
+
+  - name: lexos.security
+    interval: 60s
+    rules:
+    # Security Alerts
+    - alert: HighFailedLoginAttempts
+      expr: increase(http_requests_total{status="401"}[5m]) > 50
+      for: 1m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "High failed login attempts"
+        description: "{{ $value }} failed login attempts in the last 5 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/security-failed-logins"
+    
+    - alert: SuspiciousTrafficPattern
+      expr: rate(http_requests_total[1m]) > 1000
+      for: 2m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "Suspicious traffic pattern detected"
+        description: "Request rate is {{ $value }} requests/sec for more than 2 minutes"
+        runbook_url: "https://docs.lexos.ai/runbooks/security-traffic-spike"
+    
+    - alert: CertificateExpiringSoon
+      expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+      for: 1h
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "SSL certificate expiring soon"
+        description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} days"
+        runbook_url: "https://docs.lexos.ai/runbooks/cert-expiring"

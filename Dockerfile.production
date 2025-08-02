@@ -1,75 +1,187 @@
-# Multi-stage build for production LEX deployment
-FROM python:3.11-slim as base
+
+# Multi-stage production Dockerfile for LexOS API
+# Optimized for H100 GPU deployment
+
+# Stage 1: Base Python image with CUDA support
+FROM nvidia/cuda:12.2-devel-ubuntu22.04 as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
+    python3-pip \
+    build-essential \
     curl \
+    wget \
     git \
+    libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libopencv-dev \
     ffmpeg \
     libsm6 \
     libxext6 \
-    libfontconfig1 \
-    libxrender1 \
-    libgl1-mesa-glx \
-    build-essential \
+    libxrender-dev \
     libglib2.0-0 \
-    libgl1 \
-    libgl1-mesa-dri \
-    libssl-dev \
-    libffi-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    zlib1g-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libavcodec-dev \
-    libavformat-dev \
-    libswscale-dev \
-    libopenblas-dev \
-    liblapack-dev \
-    gfortran \
-    pkg-config \
+    libgtk-3-0 \
+    ca-certificates \
+    gnupg \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Upgrade pip
+RUN python -m pip install --upgrade pip setuptools wheel
+
+# Stage 2: Dependencies installation
+FROM base as dependencies
+
+# Copy requirements first for better caching
+COPY requirements.txt requirements_h100.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_h100.txt
+
+# Install additional production dependencies
+RUN pip install --no-cache-dir \
+    gunicorn[gevent]==21.2.0 \
+    prometheus-client==0.19.0 \
+    sentry-sdk[fastapi]==1.38.0 \
+    structlog==23.2.0 \
+    uvloop==0.19.0 \
+    httptools==0.6.1 \
+    python-multipart==0.0.6 \
+    aiofiles==23.2.1 \
+    aiocache[redis]==0.12.2 \
+    celery[redis]==5.3.4 \
+    flower==2.0.1
+
+# Stage 3: Application build
+FROM dependencies as builder
 
 # Set working directory
 WORKDIR /app
 
-# Create non-root user
-RUN groupadd -r lexos && useradd -r -g lexos lexos
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-# Install torch/torchvision/torchaudio with CUDA if available
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu118 && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Production stage
-FROM base as production
-
-# Copy application code
-COPY . .
+# Copy source code
+COPY server/ ./server/
+COPY frontend/ ./frontend/
+COPY lex_vault/ ./lex_vault/
+COPY monitoring/ ./monitoring/
+COPY scripts/ ./scripts/
 
 # Create necessary directories
-RUN mkdir -p data/lmdb data/vectors models/avatar logs && \
-    chown -R lexos:lexos /app
+RUN mkdir -p /app/data /app/models /app/logs /app/cache
+
+# Copy configuration files
+COPY .env.production ./
+COPY nginx.conf ./
+
+# Build frontend assets
+WORKDIR /app/frontend/modern
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && npm ci --only=production \
+    && npm run build \
+    && rm -rf node_modules
+
+# Stage 4: Production runtime
+FROM nvidia/cuda:12.2-runtime-ubuntu22.04 as production
+
+# Set environment variables for production
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    PATH="/app/.local/bin:$PATH" \
+    DEBIAN_FRONTEND=noninteractive \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+    NCCL_DEBUG=INFO \
+    OMP_NUM_THREADS=8 \
+    TORCH_CUDA_ARCH_LIST=9.0
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-distutils \
+    python3-pip \
+    libpq5 \
+    libssl3 \
+    libffi8 \
+    libjpeg8 \
+    libpng16-16 \
+    libwebp7 \
+    libopencv-core4.5d \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libglib2.0-0 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create symlink for python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Create non-root user
+RUN groupadd -r lexos && useradd -r -g lexos -u 1000 lexos
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python dependencies from builder stage
+COPY --from=dependencies /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy application code from builder stage
+COPY --from=builder --chown=lexos:lexos /app /app
+
+# Create and set permissions for data directories
+RUN mkdir -p /app/data /app/models /app/logs /app/cache /app/tmp \
+    && chown -R lexos:lexos /app \
+    && chmod -R 755 /app \
+    && chmod -R 777 /app/data /app/models /app/logs /app/cache /app/tmp
+
+# Copy startup scripts
+COPY --chown=lexos:lexos scripts/start-production.sh /app/start.sh
+COPY --chown=lexos:lexos scripts/health-check.sh /app/health-check.sh
+RUN chmod +x /app/start.sh /app/health-check.sh
 
 # Switch to non-root user
 USER lexos
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
 # Expose ports
-EXPOSE 8000 8002
+EXPOSE 8000 8001 8002
 
-# Environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /app/health-check.sh
 
-# Run the production server
-CMD ["python", "production_server.py"]
+# Set default command
+CMD ["/app/start.sh"]
+
+# Labels for metadata
+LABEL maintainer="LexOS Team <team@lexos.ai>" \
+      version="2.0.0" \
+      description="LexOS AI Platform - Production Ready" \
+      org.opencontainers.image.title="LexOS API" \
+      org.opencontainers.image.description="Production-ready LexOS AI Platform optimized for H100 GPUs" \
+      org.opencontainers.image.version="2.0.0" \
+      org.opencontainers.image.vendor="LexOS" \
+      org.opencontainers.image.licenses="Proprietary" \
+      org.opencontainers.image.source="https://github.com/LexHelios/Lexworking"
