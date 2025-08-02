@@ -6,6 +6,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depe
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import logging
 from contextlib import asynccontextmanager
@@ -16,11 +17,13 @@ from datetime import datetime
 
 # Import local modules
 from .settings import settings
-from .api.routes import chat, execute, health, lex
+from .api.routes import chat, execute, health, lex, documents, memory, viewer, search
+from .api import voice_routes
 from .api.dependencies import get_current_user, get_db_session
 from .orchestrator.engine import vllm_engine
 from .memory.lmdb_store import memory_store
 from .memory.vector_store import vector_store
+from .memory.persistent_memory_manager import persistent_memory
 from .healing.cognitive_monitor import cognitive_monitor
 
 # Configure logging
@@ -47,6 +50,7 @@ async def lifespan(app: FastAPI):
         # Initialize memory systems
         await memory_store.initialize()
         await vector_store.initialize()
+        await persistent_memory.initialize()
         logger.info("✅ Memory systems initialized")
         
         # Start cognitive monitor
@@ -94,6 +98,15 @@ app.include_router(lex.router, prefix="/api/v1", tags=["LEX - Unified Consciousn
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(execute.router, prefix="/api/v1", tags=["execute"])
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
+app.include_router(memory.router, prefix="/api/v1/memory", tags=["memory"])
+app.include_router(viewer.router, prefix="/vault", tags=["viewer"])
+app.include_router(search.router, tags=["search"])
+app.include_router(voice_routes.router, tags=["voice"])
+
+# Mount static files
+if os.path.exists("./frontend"):
+    app.mount("/", StaticFiles(directory="./frontend", html=True), name="static")
 
 @app.get("/")
 async def root():
@@ -145,6 +158,7 @@ async def get_system_status():
             "vllm_engine": await vllm_engine.health_check(),
             "memory_store": await memory_store.health_check(),
             "vector_store": await vector_store.health_check(),
+            "persistent_memory": await persistent_memory.get_stats(),
             "cognitive_monitor": await cognitive_monitor.health_check()
         },
         "active_connections": len(active_connections),

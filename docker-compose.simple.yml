@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Main API
+  lexos-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    container_name: lexworking-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONIOENCODING=utf-8
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Frontend Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: lexworking-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.simple.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - lexos-api
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:alpine
+    container_name: lexworking-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

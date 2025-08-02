@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexOS - Enhanced Chat with Documents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #141414;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+        
+        .app-subtitle {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-item:hover {
+            background: #1a1a1a;
+        }
+        
+        .nav-item.active {
+            background: #1a1a1a;
+            color: #00ff88;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        /* Main Chat Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: #1a1a1a;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background: #333;
+            border-color: #444;
+        }
+        
+        /* Messages Area */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #00ff88;
+            color: #000;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #2a2a2a;
+            color: #00ff88;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-header {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .message-text {
+            background: #1a1a1a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+        
+        .message.user .message-text {
+            background: #1a2a1a;
+        }
+        
+        /* Document Display */
+        .document-display {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .document-title {
+            font-weight: 500;
+            color: #00ff88;
+        }
+        
+        .document-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .doc-btn {
+            padding: 6px 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .doc-btn:hover {
+            background: #333;
+            border-color: #555;
+        }
+        
+        .document-preview {
+            background: #0f0f0f;
+            padding: 16px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .document-preview img {
+            max-width: 100%;
+            border-radius: 6px;
+        }
+        
+        .document-preview pre {
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+        }
+        
+        /* Document List */
+        .document-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .document-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .document-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+        
+        .document-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .document-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .document-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Input Area */
+        .input-container {
+            padding: 20px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .input-field {
+            flex: 1;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        
+        .send-button {
+            width: 44px;
+            height: 44px;
+            background: #00ff88;
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send-button:hover {
+            background: #00cc66;
+            transform: scale(1.05);
+        }
+        
+        .send-button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        /* Loading */
+        .loading-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px;
+        }
+        
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: loading 1.4s infinite;
+        }
+        
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes loading {
+            0%, 60%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            30% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* File Upload */
+        .file-upload-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .file-upload-modal {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .upload-area {
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .upload-area.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="app-title">LexOS</div>
+                <div class="app-subtitle">Your AI Consciousness</div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active">
+                    <span class="nav-icon">💬</span>
+                    <span>Chat</span>
+                </div>
+                <div class="nav-item" onclick="showDocuments()">
+                    <span class="nav-icon">📁</span>
+                    <span>Documents</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🧠</span>
+                    <span>Memory</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="chat-header">
+                <h2 class="chat-title">Chat with LEX</h2>
+                <div class="header-actions">
+                    <button class="btn-icon" onclick="showUpload()" title="Upload File">
+                        📎
+                    </button>
+                    <button class="btn-icon" onclick="clearChat()" title="Clear Chat">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be inserted here -->
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        class="input-field" 
+                        id="messageInput" 
+                        placeholder="Ask LEX anything... Try 'show my documents' or 'find PDF about...'"
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" onclick="sendMessage()">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- File Upload Modal -->
+    <div class="file-upload-overlay" id="uploadOverlay" onclick="hideUpload(event)">
+        <div class="file-upload-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px;">Upload Document</h3>
+            <div class="upload-area" id="uploadArea">
+                <div style="font-size: 48px; margin-bottom: 15px;">📤</div>
+                <p>Drag and drop files here or click to browse</p>
+                <input type="file" id="fileInput" style="display: none;" multiple>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            const sessionId = Math.random().toString(36).substring(7);
+            ws = new WebSocket(`ws://localhost:8000/ws/lex/${sessionId}`);
+            
+            ws.onopen = () => {
+                console.log('Connected to LEX');
+                addMessage('assistant', 'Connected to LEX consciousness. How can I help you today?');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleLexResponse(data);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addMessage('system', 'Connection error. Please refresh the page.');
+            };
+            
+            ws.onclose = () => {
+                console.log('Disconnected from LEX');
+                setTimeout(initWebSocket, 3000); // Reconnect after 3 seconds
+            };
+        }
+        
+        // Send message to LEX
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            
+            // Clear input
+            messageInput.value = '';
+            sendButton.disabled = true;
+            
+            // Show loading
+            showLoading();
+            
+            try {
+                // Use REST API for now (WebSocket integration can be added later)
+                const response = await fetch('/api/v1/lex', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        voice_mode: false,
+                        context: {}
+                    })
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                // Handle response based on type
+                if (data.type === 'search_response' || (data.response && typeof data.response === 'object' && data.response.type === 'search_response')) {
+                    // Handle search results
+                    const searchData = data.response.data || data.data || {};
+                    const content = data.response.content || data.response || 'Search completed';
+                    addSearchResults(searchData, content);
+                } else if (data.response.includes('document') || data.response.includes('Document')) {
+                    handleDocumentResponse(data);
+                } else {
+                    addMessage('assistant', data.response);
+                }
+                
+            } catch (error) {
+                hideLoading();
+                addMessage('system', 'Failed to send message. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+            }
+        }
+        
+        // Handle document-specific responses
+        function handleDocumentResponse(data) {
+            const response = data.response;
+            
+            // Check if response contains document data
+            if (response.data && response.data.documents) {
+                // Show document list
+                addDocumentList(response.data.documents, response.content);
+            } else if (response.data && response.data.document) {
+                // Show single document
+                addDocumentPreview(response.data.document, response.content);
+            } else if (response.data && response.data.results) {
+                // Show search results
+                addSearchResults(response.data, response.content);
+            } else {
+                // Regular message
+                addMessage('assistant', response);
+            }
+        }
+        
+        // Add document list to chat
+        function addDocumentList(documents, message) {
+            const messageDiv = createMessage('assistant', message);
+            
+            const listDiv = document.createElement('div');
+            listDiv.className = 'document-list';
+            
+            documents.forEach(doc => {
+                const card = document.createElement('div');
+                card.className = 'document-card';
+                card.onclick = () => viewDocument(doc.doc_id);
+                
+                card.innerHTML = `
+                    <div class="document-icon">${getFileIcon(doc.type)}</div>
+                    <div class="document-name">${doc.name}</div>
+                    <div class="document-meta">${doc.size || ''}</div>
+                `;
+                
+                listDiv.appendChild(card);
+            });
+            
+            messageDiv.querySelector('.message-content').appendChild(listDiv);
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // Add document preview to chat
+        function addDocumentPreview(document, message) {
+            const messageDiv = createMessage('assistant', message);
+            
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'document-display';
+            
+            previewDiv.innerHTML = `
+                <div class="document-header">
+                    <span class="document-title">${document.name}</span>
+                    <div class="document-actions">
+                        <button class="doc-btn" onclick="viewFullDocument('${document.doc_id}')">View Full</button>
+                        <button class="doc-btn" onclick="downloadDocument('${document.doc_id}')">Download</button>
+                    </div>
+                </div>
+                <div class="document-preview">
+                    ${renderDocumentContent(document)}
+                </div>
+            `;
+            
+            messageDiv.querySelector('.message-content').appendChild(previewDiv);
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // Add search results to chat
+        function addSearchResults(searchData, message) {
+            const messageDiv = createMessage('assistant', message);
+            
+            const resultsDiv = document.createElement('div');
+            resultsDiv.className = 'search-results';
+            resultsDiv.style.cssText = 'margin-top: 12px;';
+            
+            const results = searchData.results || [];
+            results.forEach((result, index) => {
+                const resultCard = document.createElement('div');
+                resultCard.className = 'search-result-card';
+                resultCard.style.cssText = 'background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer;';
+                
+                resultCard.innerHTML = `
+                    <div style="font-weight: 500; color: #00ff88; margin-bottom: 4px;">
+                        ${index + 1}. ${escapeHtml(result.title || 'Untitled')}
+                    </div>
+                    <div style="font-size: 13px; color: #ccc; margin-bottom: 4px;">
+                        ${escapeHtml(result.snippet || 'No description available')}
+                    </div>
+                    <div style="font-size: 12px; color: #666;">
+                        🔗 ${escapeHtml(result.url || '')}
+                        ${result.date ? ` • 📅 ${result.date}` : ''}
+                    </div>
+                `;
+                
+                resultCard.onclick = () => window.open(result.url, '_blank');
+                resultsDiv.appendChild(resultCard);
+            });
+            
+            if (searchData.total_results > results.length) {
+                const moreDiv = document.createElement('div');
+                moreDiv.style.cssText = 'text-align: center; color: #666; font-size: 13px; margin-top: 8px;';
+                moreDiv.textContent = `...and ${searchData.total_results - results.length} more results`;
+                resultsDiv.appendChild(moreDiv);
+            }
+            
+            messageDiv.querySelector('.message-content').appendChild(resultsDiv);
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // Render document content based on type
+        function renderDocumentContent(document) {
+            if (document.image_data) {
+                return `<img src="${document.image_data}" alt="${document.name}">`;
+            } else if (document.text_content) {
+                return `<pre>${escapeHtml(document.text_content)}</pre>`;
+            } else {
+                return `<p>No preview available</p>`;
+            }
+        }
+        
+        // Add message to chat
+        function addMessage(type, content) {
+            const messageDiv = createMessage(type, content);
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // Create message element
+        function createMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = type === 'user' ? '👤' : '🤖';
+            const name = type === 'user' ? 'You' : 'LEX';
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-header">${name}</div>
+                    <div class="message-text">${content}</div>
+                </div>
+            `;
+            
+            return messageDiv;
+        }
+        
+        // Show loading indicator
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant';
+            loadingDiv.id = 'loadingMessage';
+            
+            loadingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="loading-indicator">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+        
+        // Hide loading indicator
+        function hideLoading() {
+            const loading = document.getElementById('loadingMessage');
+            if (loading) {
+                loading.remove();
+            }
+        }
+        
+        // File upload handling
+        function showUpload() {
+            document.getElementById('uploadOverlay').style.display = 'flex';
+        }
+        
+        function hideUpload(event) {
+            if (event && event.target.id === 'uploadOverlay') {
+                document.getElementById('uploadOverlay').style.display = 'none';
+            }
+        }
+        
+        // Document actions
+        async function viewDocument(docId) {
+            await sendMessageText(`open document ${docId}`);
+        }
+        
+        function viewFullDocument(docId) {
+            window.open(`/api/v1/documents/view/${docId}`, '_blank');
+        }
+        
+        function downloadDocument(docId) {
+            window.location.href = `/api/v1/documents/download/${docId}`;
+        }
+        
+        async function showDocuments() {
+            await sendMessageText('show my documents');
+        }
+        
+        async function sendMessageText(text) {
+            messageInput.value = text;
+            await sendMessage();
+        }
+        
+        // Helper functions
+        function getFileIcon(type) {
+            const icons = {
+                'pdf': '📄',
+                'document': '📝',
+                'image': '🖼️',
+                'spreadsheet': '📊',
+                'presentation': '📽️',
+                'text': '📋'
+            };
+            return icons[type] || '📎';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function clearChat() {
+            messagesContainer.innerHTML = '';
+            addMessage('assistant', 'Chat cleared. How can I help you?');
+        }
+        
+        // Keyboard shortcuts
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+        });
+        
+        // File upload
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        async function handleFiles(files) {
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('/api/v1/documents/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        addMessage('assistant', `✅ Uploaded: ${file.name}`);
+                    }
+                } catch (error) {
+                    addMessage('system', `Failed to upload ${file.name}`);
+                }
+            }
+            
+            hideUpload();
+        }
+        
+        // Initialize
+        initWebSocket();
+        messageInput.focus();
+    </script>
+</body>
+</html>

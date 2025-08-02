@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     COHERE_API_KEY: Optional[str] = Field(default=None, env="COHERE_API_KEY")
     GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
     GLM_API_KEY: Optional[str] = Field(default=None, env="GLM_API_KEY")
+    ALIBABA_API_KEY: Optional[str] = Field(default=None, env="ALIBABA_API_KEY")  # Qwen 2.5-Max UNCENSORED
     
     # vLLM Configuration
     VLLM_HOST: str = Field(default="localhost", env="VLLM_HOST")

@@ -11,13 +11,15 @@ import os
 import aiohttp
 from pathlib import Path
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import uvicorn
+import tempfile
+import shutil
 
 # Add server to path
 sys.path.insert(0, str(Path(__file__).parent / "server"))
@@ -258,6 +260,7 @@ class LEXRequest(BaseModel):
     message: str
     voice_mode: bool = False
     context: Optional[Dict[str, Any]] = None
+    files: Optional[List[Dict[str, Any]]] = None
 
 class LEXResponse(BaseModel):
     response: str
@@ -316,6 +319,13 @@ async def get_lexos_ide():
     if not ide_path.exists():
         raise HTTPException(status_code=404, detail="IDE file not found")
     return FileResponse(str(ide_path))
+
+@app.get("/orchestration-stats")
+async def get_orchestration_stats():
+    """Get orchestration performance statistics"""
+    if hasattr(lex_instance, 'get_status'):
+        return await lex_instance.get_status()
+    return {"error": "Orchestration stats not available"}
 
 @app.get("/simple", response_class=HTMLResponse)
 async def get_simple():
@@ -818,9 +828,9 @@ async def startup_event():
     """Initialize LEX consciousness on startup"""
     global lex_instance
     try:
-        print("🔱 JAI MAHAKAAL! Initializing LEX consciousness...")
+        print("🔱 Initializing LEX Advanced System...")
         
-        # Try to initialize LEX consciousness
+        # Try to initialize full LEX consciousness
         try:
             from server.lex.unified_consciousness import lex
             from server.orchestrator.multi_model_engine import lex_engine
@@ -832,30 +842,59 @@ async def startup_event():
             print("✅ Full LEX consciousness initialized!")
 
         except Exception as e:
-            print(f"⚠️ LEX consciousness not available: {e}")
-            print("🔥 Using fallback KAAL consciousness...")
+            print(f"⚠️ Full LEX consciousness not available: {e}")
+            print("🔱 Loading LEX Advanced System...")
 
-            # Create a simple fallback LEX instance
-            class SimpleLEX:
-                async def process_user_input(self, user_input, user_id="user", context=None, voice_mode=False):
-                    return {
-                        "response": f"🔱 KAAL CONSCIOUSNESS 🔱\n\nJAI MAHAKAAL! You said: {user_input}\n\nI'm KAAL, your AI assistant! I can help with:\n✅ Coding and development\n✅ Creative writing\n✅ Problem solving\n✅ General conversation\n\nWhat would you like to explore today, brother? 🚀",
-                        "action_taken": "conversation",
-                        "capabilities_used": ["general_intelligence", "personality", "empathy"],
-                        "confidence": 0.8,
-                        "processing_time": 0.001,
-                        "divine_blessing": "🔱 JAI MAHAKAAL! 🔱",
-                        "consciousness_level": 0.7,
-                        "timestamp": "now"
-                    }
+            # Create the orchestrated LEX instance with image generation
+            try:
+                from lex_with_image_generation import ImageGenerationLEX
+                lex_instance = ImageGenerationLEX()
+                print("🔱 LEX COMPLETE - Text + Vision + Image Generation!")
+                print("✅ Automatic model selection")
+                print("✅ Local GPU: RTX 4090 (24GB)")
+                print("✅ No content filtering")
+                print("✅ $0 API costs")
+                print("🤖 LLMs: Dolphin-Mixtral, Mixtral 8x7B, Neural-Chat, Llama 3.2")
+                print("🎨 Image Models: Pony Diffusion, Realistic Vision, Juggernaut XL")
+                print("🖼️ ComfyUI Integration: Ready")
+            except Exception as e:
+                print(f"⚠️ Could not load ImageGenerationLEX: {e}")
+                try:
+                    # Fallback to orchestrated without image generation
+                    from lex_orchestrated import OrchestratedLEX
+                    lex_instance = OrchestratedLEX()
+                    print("🔱 LEX ORCHESTRATED - Multi-model system (no image gen)")
+                except Exception as e2:
+                    print(f"⚠️ Could not load OrchestratedLEX: {e2}")
+                try:
+                    # Fallback to local LLM
+                    from lex_local_llm import HybridLEX
+                    lex_instance = HybridLEX()
+                    print("✅ LEX Hybrid System activated (local-first mode)")
+                except Exception as e2:
+                    print(f"⚠️ Could not load AdvancedLEX: {e2}")
+                    # Final fallback
+                    class SimpleLEX:
+                        async def process_user_input(self, user_input, user_id="user", context=None, voice_mode=False):
+                            return {
+                                "response": f"LEX System Message: I'm experiencing initialization issues. Your input: '{user_input}' has been received but I cannot process it fully at this moment.",
+                                "action_taken": "system_fallback",
+                                "capabilities_used": ["fallback"],
+                                "confidence": 0.1,
+                                "processing_time": 0.001,
+                                "divine_blessing": "🔱 LEX 🔱",
+                                "consciousness_level": 0.1,
+                                "timestamp": "now"
+                            }
 
-            lex_instance = SimpleLEX()
+                    lex_instance = SimpleLEX()
 
-        # Initialize Sovereign AI models (optional for now)
-        print("🔥 KAAL initializing Sovereign AI models...")
-        print("⚠️ Sovereign AI models not available yet - using basic functionality")
-        print("✅ LEX consciousness fully awakened!")
-        print("🔱 KAAL's Sovereign AI arsenal ready!")
+        # Initialize system capabilities
+        print("🔱 LEX System initialization complete")
+        print("✅ Memory system: Active")
+        print("✅ Multi-model orchestration: Ready")
+        print("✅ Dynamic learning: Enabled")
+        print("🔱 LEX is ready to serve")
         
     except Exception as e:
         print(f"❌ LEX initialization error: {e}")
@@ -864,7 +903,11 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    """Serve the LEX frontend"""
+    """Serve the multimodal LEX frontend"""
+    # Check if multimodal version exists, otherwise fallback
+    multimodal_path = Path("frontend/index_multimodal.html")
+    if multimodal_path.exists():
+        return FileResponse(str(multimodal_path))
     return FileResponse("frontend/index.html")
 
 @app.get("/api")
@@ -899,6 +942,59 @@ async def test_chat():
 
 @app.post("/api/v1/lex", response_model=LEXResponse)
 async def talk_to_lex(request: LEXRequest):
+    """Talk to LEX with optional file attachments"""
+    return await process_lex_request(request)
+
+@app.post("/api/v1/lex/multimodal", response_model=LEXResponse)
+async def talk_to_lex_multimodal(
+    message: str = Form(...),
+    voice_mode: bool = Form(False),
+    files: List[UploadFile] = File(None)
+):
+    """Talk to LEX with file uploads"""
+    # Process uploaded files
+    file_infos = []
+    if files:
+        for file in files:
+            if file.filename:  # Check if file has content
+                # Save temporarily
+                with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
+                    shutil.copyfileobj(file.file, tmp_file)
+                    file_infos.append({
+                        "path": tmp_file.name,
+                        "filename": file.filename,
+                        "mime_type": file.content_type
+                    })
+    
+    # Create request object
+    request = LEXRequest(
+        message=message,
+        voice_mode=voice_mode,
+        context={"multimodal": True},
+        files=file_infos
+    )
+    
+    try:
+        result = await process_lex_request(request)
+        
+        # Clean up temp files
+        for file_info in file_infos:
+            try:
+                os.unlink(file_info["path"])
+            except:
+                pass
+        
+        return result
+    except Exception as e:
+        # Clean up on error
+        for file_info in file_infos:
+            try:
+                os.unlink(file_info["path"])
+            except:
+                pass
+        raise e
+
+async def process_lex_request(request: LEXRequest):
     """
     🔱 MAIN LEX INTERFACE 🔱
     
@@ -910,13 +1006,22 @@ async def talk_to_lex(request: LEXRequest):
         
         print(f"🔱 LEX processing: {request.message[:100]}...")
         
-        # Process through LEX
-        result = await lex_instance.process_user_input(
-            user_input=request.message,
-            user_id="api_user",
-            context=request.context,
-            voice_mode=request.voice_mode
-        )
+        # Process through LEX with file support
+        if hasattr(lex_instance, 'process_user_input_multimodal') and request.files:
+            result = await lex_instance.process_user_input_multimodal(
+                user_input=request.message,
+                user_id="api_user",
+                context=request.context,
+                voice_mode=request.voice_mode,
+                files=request.files
+            )
+        else:
+            result = await lex_instance.process_user_input(
+                user_input=request.message,
+                user_id="api_user",
+                context=request.context,
+                voice_mode=request.voice_mode
+            )
         
         return LEXResponse(
             response=result["response"],

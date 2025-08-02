@@ -1,0 +1,13 @@
+{
+  "interactions": [],
+  "learned_patterns": {},
+  "user_preferences": {
+    "default_user": {
+      "prefers_uncensored": true,
+      "wants_image_generation": true,
+      "local_models_only": true
+    }
+  },
+  "model_performance": {},
+  "timestamp": "2025-07-31T00:00:00Z"
+}

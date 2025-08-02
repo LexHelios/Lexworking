@@ -17,8 +17,10 @@ from ..agents.sophia import sophia_agent
 from ..agents.creator import creator_agent
 from ..models.digital_soul import digital_soul
 from ..memory.rag import retrieve_context
+from .document_consciousness import document_consciousness
+from .web_search_consciousness import web_search_consciousness
 try:
-    from ..voice.consciousness_voice import consciousness_voice
+    from .voice_consciousness import voice_consciousness
     VOICE_AVAILABLE = True
 except ImportError:
     VOICE_AVAILABLE = False
@@ -36,6 +38,8 @@ class ActionType(Enum):
     EXECUTION = "execution"
     LEARNING = "learning"
     CREATIVE = "creative"
+    DOCUMENT_MANAGEMENT = "document_management"
+    WEB_SEARCH = "web_search"
 
 class LEXUnifiedConsciousness:
     """
@@ -211,6 +215,34 @@ class LEXUnifiedConsciousness:
     ) -> Dict[str, Any]:
         """Analyze what the user wants LEX to do"""
         
+        # First check if this is a document-related request
+        doc_result = await document_consciousness.process_document_intent(user_input, context or {})
+        if doc_result:
+            return {
+                "primary_intent": "document_management",
+                "urgency": "medium",
+                "complexity": "simple",
+                "action_type": ActionType.DOCUMENT_MANAGEMENT,
+                "response_preference": "structured",
+                "emotional_context": "helpful",
+                "document_specific": True,
+                "raw_result": doc_result
+            }
+        
+        # Check if this is a web search request
+        search_result = await web_search_consciousness.process_search_intent(user_input, context or {})
+        if search_result:
+            return {
+                "primary_intent": "web_search",
+                "urgency": "medium",
+                "complexity": "simple",
+                "action_type": ActionType.WEB_SEARCH,
+                "response_preference": "informative",
+                "emotional_context": "helpful",
+                "web_search_specific": True,
+                "raw_result": search_result
+            }
+        
         # Check for advanced mode
         advanced_mode = context and context.get('advanced_mode', False) if context else False
         advanced_capabilities = context and context.get('advanced_capabilities', {}) if context else {}
@@ -384,12 +416,14 @@ Respond in JSON format with your analysis.
             ActionType.CODE_GENERATION: ["creator", "code_synthesis", "testing"],
             ActionType.PLANNING: ["atlas", "strategic_planning", "project_management"],
             ActionType.CREATIVE: ["creator", "innovation", "design_thinking"],
-            ActionType.CONVERSATION: ["general_intelligence", "personality", "empathy"]
+            ActionType.CONVERSATION: ["general_intelligence", "personality", "empathy"],
+            ActionType.DOCUMENT_MANAGEMENT: ["document_access", "file_management", "content_extraction"],
+            ActionType.WEB_SEARCH: ["web_search", "information_retrieval", "current_events"]
         }
         
         capabilities_needed = capabilities_map.get(action_type, ["general_intelligence"])
         
-        return {
+        plan = {
             "primary_action": action_type.value,
             "capabilities_engaged": capabilities_needed,
             "execution_strategy": "unified_response" if complexity == "simple" else "multi_step",
@@ -397,6 +431,16 @@ Respond in JSON format with your analysis.
             "estimated_complexity": complexity,
             "requires_followup": complexity == "complex"
         }
+        
+        # Pass through document-specific data
+        if action_type == ActionType.DOCUMENT_MANAGEMENT:
+            plan["intent_result"] = intent_analysis
+        
+        # Pass through web search-specific data
+        if action_type == ActionType.WEB_SEARCH:
+            plan["intent_result"] = intent_analysis
+        
+        return plan
     
     async def _execute_action_plan(
         self, 
@@ -410,8 +454,40 @@ Respond in JSON format with your analysis.
             primary_action = action_plan["primary_action"]
             capabilities = action_plan["capabilities_engaged"]
             
+            # Handle document management actions
+            if primary_action == ActionType.DOCUMENT_MANAGEMENT.value:
+                intent_result = action_plan.get("intent_result", {})
+                doc_result = intent_result.get("raw_result", {})
+                
+                return {
+                    "success": True,
+                    "action_taken": f"document_{doc_result.get('type', 'action')}",
+                    "results": doc_result,
+                    "agent_responses": {},
+                    "unified_analysis": doc_result.get("response", "Document action completed"),
+                    "specialist_used": "document_consciousness",
+                    "confidence": 0.95,
+                    "details": {"document_action": True}
+                }
+            
+            # Handle web search actions
+            elif primary_action == ActionType.WEB_SEARCH.value:
+                intent_result = action_plan.get("intent_result", {})
+                search_result = intent_result.get("raw_result", {})
+                
+                return {
+                    "success": True,
+                    "action_taken": f"web_search_{search_result.get('type', 'general')}",
+                    "results": search_result,
+                    "agent_responses": {},
+                    "unified_analysis": search_result.get("response", "Search completed"),
+                    "specialist_used": "web_search_consciousness",
+                    "confidence": 0.9,
+                    "details": {"web_search": True}
+                }
+            
             # Route to appropriate specialist if needed
-            if "orion" in capabilities:
+            elif "orion" in capabilities:
                 # Research-focused response
                 specialist_response = await orion_agent.run(user_input, user_id)
                 return {
@@ -454,37 +530,121 @@ Respond in JSON format with your analysis.
                     "generate image", "create image", "draw", "picture of", "image of",
                     "make an image", "show me", "visualize", "paint", "sketch"
                 ]):
-                    # Use Sovereign AI for image generation
+                    # Use Wan for image generation (Alibaba Cloud)
                     try:
-                        from ..sovereign_ai_loader import sovereign_ai
-                        result = await sovereign_ai.generate_image(user_input)
+                        from ..orchestrator.cloud_providers.wan_provider import wan_provider
+                        
+                        # Extract prompt from user input
+                        prompt = user_input
+                        for prefix in ["generate image", "create image", "draw", "make an image", "show me"]:
+                            if prefix in user_input_lower:
+                                prompt = user_input.split(prefix, 1)[1].strip()
+                                break
+                        
+                        # Use Wan 2.2 Professional for best quality
+                        result = await wan_provider.generate_image(
+                            prompt=prompt,
+                            model="wan2.2-t2i-plus",
+                            size="1024x1024",
+                            quality="standard"
+                        )
 
-                        if "error" in result:
+                        if result.get("error"):
+                            # Fallback to Sovereign AI if available
+                            try:
+                                from ..sovereign_ai_loader import sovereign_ai
+                                fallback_result = await sovereign_ai.generate_image(user_input)
+                                if not fallback_result.get("error"):
+                                    return {
+                                        "content": f"🎨 Image generated successfully! {fallback_result['image_filename']}",
+                                        "specialist_used": "stable_diffusion_xl",
+                                        "confidence": 1.0,
+                                        "details": {"image_request": True, "image_data": fallback_result},
+                                        "action_taken": "image_generation",
+                                        "image_result": fallback_result
+                                    }
+                            except:
+                                pass
+                            
                             return {
-                                "content": f"🎨 Image generation error: {result['error']}. Try DALL-E or MidJourney for now.",
+                                "content": f"🎨 Image generation temporarily unavailable. Error: {result['error']}",
                                 "specialist_used": "image_handler",
                                 "confidence": 0.5,
                                 "details": {"image_request": True, "error": True}
                             }
                         else:
+                            # Success with Wan
+                            image_url = result["images"][0]["url"] if result.get("images") else ""
                             return {
-                                "content": f"🎨 Image generated successfully! {result['image_filename']}",
-                                "specialist_used": "stable_diffusion_xl",
+                                "content": f"🎨 Image generated successfully using Wan AI!\n\nPrompt: {prompt}\nModel: {result['model']}\nCost: ${result['cost']:.3f}",
+                                "specialist_used": "wan_image_generation",
                                 "confidence": 1.0,
-                                "details": {"image_request": True, "image_data": result},
+                                "details": {"image_request": True, "wan_result": result},
                                 "action_taken": "image_generation",
-                                "image_result": result,
-                                "image_filename": result.get('image_filename', ''),
-                                "image_url": result.get('image_url', '')
+                                "image_result": {
+                                    "success": True,
+                                    "image_url": image_url,
+                                    "provider": "wan",
+                                    "model": result["model"],
+                                    "cost": result["cost"]
+                                }
                             }
                     except Exception as e:
                         return {
-                            "content": f"🎨 Image generation not ready yet. Error: {str(e)}",
+                            "content": f"🎨 Image generation error: {str(e)}",
                             "specialist_used": "image_handler",
                             "confidence": 0.5,
                             "details": {"image_request": True, "error": True}
                         }
 
+                # Detect video generation requests
+                elif any(keyword in user_input_lower for keyword in [
+                    "generate video", "create video", "make a video", "video of",
+                    "animate", "video showing", "create animation"
+                ]):
+                    # Use Wan for video generation
+                    try:
+                        from ..orchestrator.cloud_providers.wan_provider import wan_provider
+                        
+                        # Extract prompt
+                        prompt = user_input
+                        for prefix in ["generate video", "create video", "make a video", "video of", "animate"]:
+                            if prefix in user_input_lower:
+                                prompt = user_input.split(prefix, 1)[1].strip()
+                                break
+                        
+                        # Default to 5 second 480p video for cost efficiency
+                        result = await wan_provider.generate_video(
+                            prompt=prompt,
+                            model="wan2.2-t2v-plus",
+                            duration=5,
+                            resolution="480p"
+                        )
+                        
+                        if result.get("error"):
+                            return {
+                                "content": f"🎬 Video generation temporarily unavailable. Error: {result['error']}",
+                                "specialist_used": "video_handler",
+                                "confidence": 0.5,
+                                "details": {"video_request": True, "error": True}
+                            }
+                        else:
+                            return {
+                                "content": f"🎬 Video generated successfully!\n\nPrompt: {prompt}\nModel: {result['model']}\nDuration: {result['duration']}s\nResolution: {result['resolution']}\nCost: ${result['cost']:.3f}",
+                                "specialist_used": "wan_video_generation",
+                                "confidence": 1.0,
+                                "details": {"video_request": True, "wan_result": result},
+                                "action_taken": "video_generation",
+                                "video_result": result
+                            }
+                    except Exception as e:
+                        return {
+                            "content": f"🎬 Video generation error: {str(e)}",
+                            "specialist_used": "video_handler",
+                            "confidence": 0.5,
+                            "details": {"video_request": True, "error": True}
+                        }
+                
                 # Detect coding requests
                 elif any(keyword in user_input_lower for keyword in [
                     "write code", "generate code", "create function", "debug", "programming",
@@ -567,7 +727,69 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
     ) -> Dict[str, Any]:
         """Generate the final LEX response with unified personality"""
 
-        base_content = execution_result["content"]
+        # Handle document management responses
+        if action_plan["primary_action"] == ActionType.DOCUMENT_MANAGEMENT.value:
+            doc_result = execution_result.get("results", {})
+            
+            response_data = {
+                "content": doc_result.get("response", "Document action completed"),
+                "type": "document_response",
+                "data": doc_result,
+                "formatting": "rich",
+                "show_ui": doc_result.get("show_ui", False),
+                "actions": doc_result.get("actions", []),
+                "confidence": 0.95,
+                "personality_engaged": True
+            }
+            
+            # Add document-specific data
+            if "document" in doc_result:
+                response_data["document"] = doc_result["document"]
+            if "documents" in doc_result:
+                response_data["documents"] = doc_result["documents"]
+            
+            # Add voice if requested
+            if voice_mode and VOICE_AVAILABLE:
+                voice_text = f"Here are your documents. {doc_result.get('response', '')[:200]}"
+                voice_result = await voice_consciousness.process_with_voice(
+                    voice_text,
+                    voice_config={"emotion": "helpful"}
+                )
+                if voice_result.get("voice_added"):
+                    response_data["voice_audio"] = voice_result.get("audio")
+            
+            return response_data
+        
+        # Handle web search responses
+        elif action_plan["primary_action"] == ActionType.WEB_SEARCH.value:
+            search_result = execution_result.get("results", {})
+            
+            response_data = {
+                "content": search_result.get("response", "Search completed"),
+                "type": "search_response",
+                "data": search_result.get("data", {}),
+                "formatting": "rich",
+                "show_ui": search_result.get("show_ui", True),
+                "actions": search_result.get("actions", ["search_more"]),
+                "confidence": 0.9,
+                "personality_engaged": True,
+                "action_taken": "web_search"
+            }
+            
+            # Add voice if requested
+            if voice_mode and VOICE_AVAILABLE:
+                # Create concise voice summary
+                voice_text = search_result.get("response", "Search completed")[:300]
+                voice_result = await voice_consciousness.process_with_voice(
+                    voice_text,
+                    voice_config={"emotion": "informative"}
+                )
+                if voice_result.get("voice_added"):
+                    response_data["voice_audio"] = voice_result.get("audio")
+            
+            return response_data
+
+        base_content = execution_result.get("content", execution_result.get("unified_analysis", ""))
         specialist_used = execution_result.get("specialist_used", "lex_unified")
 
         # Check for advanced mode
@@ -600,12 +822,16 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
         if voice_mode:
             try:
                 if VOICE_AVAILABLE:
-                    voice_audio = await consciousness_voice.synthesize_consciousness_voice(
+                    voice_result = await voice_consciousness.process_with_voice(
                         lex_wrapped_content,
-                        agent_id="lex",
-                        voice_style="intelligent_assistant"
+                        voice_config={
+                            "emotion": "confident" if response_data["confidence"] > 0.8 else "thoughtful",
+                            "stream": True
+                        }
                     )
-                    response_data["voice_audio"] = voice_audio
+                    if voice_result.get("voice_added"):
+                        response_data["voice_audio"] = voice_result.get("audio")
+                        response_data["voice_latency_ms"] = voice_result.get("latency_ms", 0)
                 else:
                     logger.warning("⚠️ Voice synthesis not available")
             except Exception as e:
@@ -683,11 +909,12 @@ Always respond as the unified LEX consciousness, not as separate agents. You hav
         if voice_mode:
             try:
                 if VOICE_AVAILABLE:
-                    voice_audio = await consciousness_voice.synthesize_consciousness_voice(
+                    voice_result = await voice_consciousness.process_with_voice(
                         error_response,
-                        agent_id="lex"
+                        voice_config={"emotion": "thoughtful"}
                     )
-                    response_data["voice_audio"] = voice_audio
+                    if voice_result.get("voice_added"):
+                        response_data["voice_audio"] = voice_result.get("audio")
             except:
                 pass
         

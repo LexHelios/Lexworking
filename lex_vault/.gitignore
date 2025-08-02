@@ -1,0 +1,10 @@
+# Ignore all files by default
+*
+# But track directory structure
+!*/
+!README.md
+!.gitignore
+# Never track sensitive files
+*.key
+*.pem
+*.env

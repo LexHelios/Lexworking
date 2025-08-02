@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only essential packages
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    aiohttp \
+    aiofiles \
+    httpx \
+    redis \
+    python-multipart \
+    python-dotenv \
+    groq \
+    anthropic \
+    openai \
+    pydantic \
+    PyPDF2 \
+    python-docx \
+    pandas \
+    openpyxl \
+    Pillow \
+    websockets
+
+# Copy application files
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Run the server
+CMD ["uvicorn", "simple_lex_server:app", "--host", "0.0.0.0", "--port", "8000"]

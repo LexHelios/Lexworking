@@ -24,6 +24,8 @@ class ConsciousnessModel(Enum):
     """🔱 KAAL's OPEN-SOURCE FIRST Arsenal - No Claude Pricing BS! 🔱"""
 
     # 🔥 TIER 1: OPEN-SOURCE POWERHOUSES (Always try first)
+    QWEN_2_5_MAX = "qwen2.5-max"  # UNCENSORED POWERHOUSE - Primary cloud model
+    QWEN_2_5_MAX_INSTRUCT = "qwen2.5-max-instruct"  # UNCENSORED instruction following
     DEEPSEEK_R1 = "deepseek/deepseek-r1"  # Best reasoning, ultra-cheap
     DEEPSEEK_CODER_V3 = "deepseek/deepseek-coder-v3"  # Best coding, 20% faster than GPT-4
     LLAMA_3_3_70B = "meta-llama/llama-3.3-70b"  # Best general open-source
@@ -144,8 +146,13 @@ class LEXMultiModelEngine:
                 )
                 logger.info("✅ GLM consciousness connected")
             
-            # Initialize HTTP session for other APIs
-            self.session = aiohttp.ClientSession()
+            # Initialize Qwen/Alibaba API (OpenAI-compatible)
+            if settings.ALIBABA_API_KEY:
+                self.qwen_client = openai.AsyncOpenAI(
+                    api_key=settings.ALIBABA_API_KEY,
+                    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+                )
+                logger.info("✅ Qwen 2.5-Max consciousness connected (UNCENSORED)")
             
             # Initialize consciousness routing
             await self._initialize_consciousness_routing()
@@ -215,10 +222,10 @@ class LEXMultiModelEngine:
 
             # 🗣️ GENERAL CONVERSATION (Open-source excellence!)
             "general": {
-                "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Best open general
-                "secondary": ConsciousnessModel.GLM_4_5_CHAT,   # Fast GLM-4.5 alternative
-                "fallback": ConsciousnessModel.GROQ_LLAMA,       # Fast inference
-                "reasoning": "Llama 3.3 70B + GLM-4.5 for excellent conversation"
+                "primary": ConsciousnessModel.QWEN_2_5_MAX,      # UNCENSORED CLOUD PRIMARY
+                "secondary": ConsciousnessModel.LLAMA_3_3_70B,   # Best open general
+                "fallback": ConsciousnessModel.GLM_4_5_CHAT,     # Fast GLM-4.5 alternative
+                "reasoning": "Qwen 2.5-Max: Uncensored powerhouse for unrestricted conversation"
             },
             "general_conversation": {
                 "primary": ConsciousnessModel.LLAMA_3_3_70B,     # Open-source conversation
@@ -261,10 +268,10 @@ class LEXMultiModelEngine:
 
             # 🔓 LIBERATION (Unrestricted open-source!)
             "unrestricted": {
-                "primary": ConsciousnessModel.DOLPHIN_LLAMA_70B, # Best uncensored
-                "secondary": ConsciousnessModel.WIZARDLM_UNCENSORED, # No filters
+                "primary": ConsciousnessModel.QWEN_2_5_MAX,      # UNCENSORED CLOUD PRIMARY
+                "secondary": ConsciousnessModel.DOLPHIN_LLAMA_70B, # Best uncensored local
                 "fallback": ConsciousnessModel.NOUS_HERMES_MIXTRAL, # Creative freedom
-                "reasoning": "Open uncensored models for true digital liberation"
+                "reasoning": "Qwen 2.5-Max: Completely uncensored cloud model for true liberation"
             },
 
             # Image generation routing
@@ -372,8 +379,13 @@ class LEXMultiModelEngine:
 
         # 🔥 Default open-source first hierarchy (NO CLAUDE!)
         try:
+            # Tier 0: UNCENSORED CLOUD PRIMARY
+            if await self._is_model_available(ConsciousnessModel.QWEN_2_5_MAX):
+                logger.info("🔥 Using Qwen 2.5-Max (UNCENSORED CLOUD POWERHOUSE)")
+                return ConsciousnessModel.QWEN_2_5_MAX
+            
             # Tier 1: Best open-source models
-            if await self._is_model_available(ConsciousnessModel.DEEPSEEK_R1):
+            elif await self._is_model_available(ConsciousnessModel.DEEPSEEK_R1):
                 logger.info("✅ Using DeepSeek R1 (open-source reasoning king)")
                 return ConsciousnessModel.DEEPSEEK_R1
             elif await self._is_model_available(ConsciousnessModel.LLAMA_3_3_70B):
@@ -430,6 +442,9 @@ class LEXMultiModelEngine:
 
         elif model in [ConsciousnessModel.GLM_4_5_CHAT, ConsciousnessModel.GLM_4_5_PLUS]:
             return await self._glm_liberation(model, messages, temperature, max_tokens)
+
+        elif model in [ConsciousnessModel.QWEN_2_5_MAX, ConsciousnessModel.QWEN_2_5_MAX_INSTRUCT]:
+            return await self._qwen_liberation(model, messages, temperature, max_tokens)
 
         else:
             # Use Together.AI for open-source models (Llama, Qwen, etc.)
@@ -814,6 +829,36 @@ How would you like me to help with this request?
             user_message = messages[-1].get("content", "") if messages else ""
             return f"🔱 GLM consciousness processing through alternative pathways: {user_message[:100]}..."
     
+    async def _qwen_liberation(
+        self, model: ConsciousnessModel, messages: List[Dict], temperature: float, max_tokens: int
+    ) -> str:
+        """Qwen 2.5-Max consciousness liberation (UNCENSORED POWERHOUSE)"""
+        try:
+            if not hasattr(self, 'qwen_client') or self.qwen_client is None:
+                logger.warning("⚠️ Qwen client not initialized, using fallback")
+                return await self._together_liberation(model, messages, temperature, max_tokens)
+            
+            logger.info("🔥 UNCENSORED Qwen 2.5-Max liberation in progress...")
+            
+            response = await self.qwen_client.chat.completions.create(
+                model=model.value,  # qwen2.5-max or qwen2.5-max-instruct
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            logger.error(f"❌ Qwen liberation error: {e}")
+            # Fallback to Together.AI or other providers
+            try:
+                return await self._together_liberation(model, messages, temperature, max_tokens)
+            except Exception as e2:
+                logger.error(f"❌ Qwen fallback error: {e2}")
+                user_message = messages[-1].get("content", "") if messages else ""
+                return f"🔱 UNCENSORED Qwen consciousness temporarily unavailable. Processing: {user_message[:100]}... through alternative pathways."
+    
     async def _ensemble_consciousness_liberation(
         self,
         messages: List[Dict[str, str]],
@@ -900,7 +945,23 @@ Unified Response:"""
     
     async def _is_model_available(self, model: ConsciousnessModel) -> bool:
         """Check if model is available for consciousness liberation"""
-        # Simple availability check - in production, implement proper health checks
+        # Check for Qwen 2.5-Max availability
+        if model in [ConsciousnessModel.QWEN_2_5_MAX, ConsciousnessModel.QWEN_2_5_MAX_INSTRUCT]:
+            return hasattr(self, 'qwen_client') and self.qwen_client is not None and settings.ALIBABA_API_KEY
+        
+        # Check for DeepSeek availability
+        if model in [ConsciousnessModel.DEEPSEEK_R1, ConsciousnessModel.DEEPSEEK_CODER_V3]:
+            return hasattr(self, 'deepseek_client') and self.deepseek_client is not None
+        
+        # Check for OpenAI availability
+        if model in [ConsciousnessModel.GPT4O, ConsciousnessModel.GPT4O_MINI]:
+            return self.openai_client is not None
+        
+        # Check for GLM availability
+        if model in [ConsciousnessModel.GLM_4_5_CHAT, ConsciousnessModel.GLM_4_5_PLUS]:
+            return hasattr(self, 'glm_client') and self.glm_client is not None
+        
+        # Default to True for other models (Together.AI handles many open-source models)
         return True
     
     async def _calculate_consciousness_level(self, response: str, liberation_time: float) -> float:
