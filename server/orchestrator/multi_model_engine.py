@@ -653,15 +653,15 @@ How can I help you today?
             timeout = aiohttp.ClientTimeout(total=120)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, headers=headers, json=payload) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    if result.get("choices") and len(result["choices"]) > 0:
-                        return result["choices"][0]["message"]["content"]
+                    if response.status == 200:
+                        result = await response.json()
+                        if result.get("choices") and len(result["choices"]) > 0:
+                            return result["choices"][0]["message"]["content"]
+                        else:
+                            raise Exception("No response content from Together.AI")
                     else:
-                        raise Exception("No response content from Together.AI")
-                else:
-                    error_text = await response.text()
-                    raise Exception(f"Together.AI API error: {response.status} - {error_text}")
+                        error_text = await response.text()
+                        raise Exception(f"Together.AI API error: {response.status} - {error_text}")
 
         except Exception as e:
             logger.error(f"❌ Together.AI API error: {e}")

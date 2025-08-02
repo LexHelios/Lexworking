@@ -24,7 +24,9 @@ class SovereignAI:
     """
     
     def __init__(self):
-        self.together_api_key = os.getenv('TOGETHER_API_KEY', 'tgp_v1_MUW_7tHh36fYmfiZuQjItka3v_dHJ58qzDsPrCfWqfw')
+        self.together_api_key = os.getenv('TOGETHER_API_KEY')
+        if not self.together_api_key:
+            raise ValueError("TOGETHER_API_KEY environment variable is required")
         self.stability_api_key = os.getenv('STABILITY_API_KEY')
         self.replicate_api_key = os.getenv('REPLICATE_API_TOKEN')
         

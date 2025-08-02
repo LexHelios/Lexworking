@@ -31,21 +31,21 @@ try:
     import openai
     OPENAI_AVAILABLE = True
     openai.api_key = os.getenv("OPENAI_API_KEY")
-except:
+except ImportError:
     OPENAI_AVAILABLE = False
 
 try:
     from groq import Groq
     GROQ_AVAILABLE = True
     groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-except:
+except ImportError:
     GROQ_AVAILABLE = False
 
 try:
     from anthropic import Anthropic
     ANTHROPIC_AVAILABLE = True
     anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-except:
+except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 # Initialize memory system

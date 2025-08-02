@@ -464,7 +464,8 @@ class UnifiedProductionServer:
         async def root():
             try:
                 return FileResponse("frontend/index.html")
-            except:
+            except (FileNotFoundError, OSError) as e:
+                logger.warning(f"Frontend index.html not found: {e}")
                 return HTMLResponse("""
                 <html><body>
                 <h1>LEX Consciousness System</h1>
@@ -479,7 +480,8 @@ class UnifiedProductionServer:
             """Serve the LexOS IDE interface"""
             try:
                 return FileResponse("frontend/ide.html")
-            except:
+            except (FileNotFoundError, OSError) as e:
+                logger.warning(f"Frontend ide.html not found: {e}")
                 return HTMLResponse("""
                 <html><body>
                 <h1>LexOS IDE</h1>

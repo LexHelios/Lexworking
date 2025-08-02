@@ -89,9 +89,9 @@ class OrchestratedLEX:
                     "task_type": result["task_analysis"]["type"]
                 }
             ))
-        except:
+        except (RuntimeError, AttributeError) as e:
             # If we can't schedule async, just skip memory for now
-            pass
+            logging.debug(f"Memory storage failed: {e}")
         
         # Build capabilities list
         capabilities = [
