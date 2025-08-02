@@ -39,7 +39,8 @@ class SimpleFileManager:
         try:
             abs_path = (self.project_root / file_path).resolve()
             return str(abs_path).startswith(str(self.project_root.resolve()))
-        except:
+        except (OSError, ValueError, RuntimeError) as e:
+            logging.warning(f"Path safety check failed for {file_path}: {e}")
             return False
 
     async def get_file_tree(self):
@@ -58,7 +59,8 @@ class SimpleFileManager:
                         if child_tree:
                             children.append(child_tree)
                     return {"name": path.name, "type": "directory", "children": children}
-            except:
+            except (OSError, PermissionError) as e:
+                logging.debug(f"Failed to read directory {path}: {e}")
                 return None
         return build_tree(self.project_root) or {"name": "lexos", "type": "directory", "children": []}
 
@@ -981,8 +983,8 @@ async def talk_to_lex_multimodal(
         for file_info in file_infos:
             try:
                 os.unlink(file_info["path"])
-            except:
-                pass
+            except (OSError, FileNotFoundError) as e:
+                logging.debug(f"Failed to cleanup temp file {file_info['path']}: {e}")
         
         return result
     except Exception as e:
@@ -990,8 +992,8 @@ async def talk_to_lex_multimodal(
         for file_info in file_infos:
             try:
                 os.unlink(file_info["path"])
-            except:
-                pass
+            except (OSError, FileNotFoundError) as e:
+                logging.debug(f"Failed to cleanup temp file {file_info['path']} during error handling: {e}")
         raise e
 
 async def process_lex_request(request: LEXRequest):

@@ -1,12 +1,18 @@
 """
 Patch to integrate document consciousness into LEX unified consciousness
 This adds document handling capabilities directly into LEX's core
+
+NOTE: This is a template/patch file with code snippets for integration.
+It's not meant to be executed directly.
 """
 
-# Add this to the ActionType enum:
-DOCUMENT_MANAGEMENT = "document_management"
+from typing import Dict, Any, Optional
 
-# Add this to _analyze_user_intent method after the existing intent analysis:
+# Placeholder for ActionType enum extension
+class ActionType:
+    DOCUMENT_MANAGEMENT = "document_management"
+
+# Template function - Add this to _analyze_user_intent method after the existing intent analysis:
 async def enhanced_analyze_user_intent(self, user_input: str, context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Enhanced intent analysis with document awareness"""
     
@@ -27,8 +33,8 @@ async def enhanced_analyze_user_intent(self, user_input: str, context: Optional[
     # Otherwise, proceed with normal intent analysis
     # ... (existing intent analysis code)
 
-# Add this to the capabilities_map in _create_action_plan:
-ActionType.DOCUMENT_MANAGEMENT: ["document_access", "file_management", "content_extraction"],
+# Template: Add this to the capabilities_map in _create_action_plan:
+# ActionType.DOCUMENT_MANAGEMENT: ["document_access", "file_management", "content_extraction"],
 
 # Add this to _execute_action_plan method to handle document actions:
 async def enhanced_execute_action_plan(self, action_plan: Dict[str, Any], user_input: str, user_id: str) -> Dict[str, Any]:

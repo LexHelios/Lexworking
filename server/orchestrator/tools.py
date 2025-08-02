@@ -16,17 +16,18 @@ tool_registry: Dict[str, Callable] = {}
 def register_tool(name: str, func: Callable):
     tool_registry[name] = func
 
-# Example tool: code execution
-@tool_interface
+# SECURITY: Code execution disabled for safety
+@tool_interface  
 def execute_code(code: str, lang: str = "python") -> Dict[str, Any]:
-    if lang == "python":
-        try:
-            exec_globals = {}
-            exec(code, exec_globals)
-            return {"result": exec_globals.get("result", None), "success": True}
-        except Exception as e:
-            return {"error": str(e), "success": False}
-    return {"error": "Unsupported language", "success": False}
+    """
+    SECURITY WARNING: Direct code execution is disabled to prevent arbitrary code execution.
+    Consider implementing a secure sandbox environment if code execution is required.
+    """
+    return {
+        "error": "Code execution disabled for security reasons. Use a secure sandbox environment.",
+        "success": False,
+        "security_note": "exec() calls are dangerous and can lead to arbitrary code execution vulnerabilities"
+    }
 
 register_tool("execute_code", execute_code)
 

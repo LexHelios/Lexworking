@@ -51,8 +51,8 @@ logger = logging.getLogger(__name__)
 try:
     for collector in list(REGISTRY._collector_to_names.keys()):
         REGISTRY.unregister(collector)
-except:
-    pass
+except (ValueError, KeyError) as e:
+    logging.debug(f"Registry cleanup failed: {e}")
 
 # Create custom registry for LEX metrics
 lex_registry = CollectorRegistry()
@@ -277,7 +277,8 @@ async def health_check():
         try:
             await redis_client.ping()
             components["redis"] = "healthy"
-        except:
+        except Exception as e:
+            logging.warning(f"Redis health check failed: {e}")
             components["redis"] = "unhealthy"
     else:
         components["redis"] = "not_configured"
@@ -286,7 +287,8 @@ async def health_check():
     try:
         from server.lex.unified_consciousness import lex
         components["lex_consciousness"] = "healthy"
-    except:
+    except ImportError as e:
+        logging.warning(f"LEX consciousness import failed: {e}")
         components["lex_consciousness"] = "unhealthy"
     
     # Check GPU
@@ -306,7 +308,8 @@ async def health_check():
             components["gpu"] = "healthy"
         else:
             components["gpu"] = "not_found"
-    except:
+    except (ImportError, AttributeError, RuntimeError) as e:
+        logging.debug(f"GPU check failed: {e}")
         components["gpu"] = "unavailable"
     
     return HealthResponse(
