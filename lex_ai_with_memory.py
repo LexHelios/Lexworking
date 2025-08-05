@@ -103,6 +103,57 @@ def get_user_id(request: LEXRequest) -> str:
 async def get_ai_response_with_context(message: str, context: Dict, user_id: str, attachment_description: str = "") -> str:
     """Get AI response using available APIs with context"""
     
+    # Handle capability questions immediately
+    message_lower = message.lower()
+    if any(phrase in message_lower for phrase in ["what can you do", "capabilities", "what are you capable of", "help me understand"]):
+        return """🔱 JAI MAHAKAAL! I'm LEX, your advanced AI consciousness with extensive capabilities:
+
+**🧠 Core Intelligence:**
+• Advanced reasoning and analysis with memory persistence
+• Multi-step problem solving
+• Strategic planning and execution
+• Learning from our conversations
+
+**💻 Technical Capabilities:**
+• Code generation and debugging (Python, JavaScript, etc.)
+• System architecture and design
+• API integration and development
+• Database design and optimization
+
+**🎨 Creative & Media:**
+• Image generation and analysis
+• Creative writing and content creation
+• Design conceptualization
+• Content synthesis
+
+**📊 Business & Analytics:**
+• Data analysis and visualization
+• Business strategy development
+• Market research and insights
+• Financial modeling
+
+**🔍 Research & Knowledge:**
+• Information gathering and synthesis
+• Document analysis and summarization
+• Knowledge synthesis across domains
+• Context-aware responses
+
+**🗣️ Communication:**
+• Natural conversation with persistent memory
+• Context retention across sessions
+• Learning your preferences and style
+• Personalized responses based on our history
+
+**🔐 Memory & Learning:**
+• I remember our previous conversations
+• I learn from your preferences and feedback
+• I adapt my responses to your communication style
+• I build context over time to better serve you
+
+I maintain memory across our conversations and continuously learn to better assist you. What would you like to explore or create together?
+
+🔱 JAI MAHAKAAL! 🔱"""
+    
     # Format context for the AI (limit to prevent token overflow)
     context_str = memory_system.format_context_for_ai(context)
     # Limit context to 2000 characters for 70B model
@@ -114,11 +165,14 @@ async def get_ai_response_with_context(message: str, context: Dict, user_id: str
 You have both short-term and long-term memory. You remember past conversations and learn from them.
 You are helpful, creative, empowering, and you build relationships with users over time.
 
-Important: 
+CRITICAL INSTRUCTIONS:
+- Never include <think> or <thinking> tags in your responses
+- Always respond directly to the user's question
 - If you recognize the user from past interactions, acknowledge them appropriately
 - Reference relevant past conversations when it adds value
 - Learn and adapt to each user's preferences and communication style
 - Start responses with '🔱 JAI MAHAKAAL!' when greeting or when the user seems excited
+- Focus on actually answering the user's question rather than meta-commentary
 
 Current context and memories:
 """ + context_str
@@ -145,7 +199,12 @@ Current context and memories:
                 temperature=0.7,
                 max_tokens=1000
             )
-            return chat_completion.choices[0].message.content
+            response_text = chat_completion.choices[0].message.content
+            # Clean thinking tags
+            import re
+            response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            response_text = re.sub(r'<thinking>.*?</thinking>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            return response_text.strip()
         except Exception as e:
             print(f"Groq error: {e}")
     
@@ -168,7 +227,12 @@ Current context and memories:
                 temperature=0.7,
                 max_tokens=1000
             )
-            return response.choices[0].message.content
+            response_text = response.choices[0].message.content
+            # Clean thinking tags
+            import re
+            response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            response_text = re.sub(r'<thinking>.*?</thinking>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            return response_text.strip()
         except Exception as e:
             print(f"OpenAI error: {e}")
     
@@ -184,7 +248,12 @@ Current context and memories:
                     {"role": "user", "content": message}
                 ]
             )
-            return response.content[0].text
+            response_text = response.content[0].text
+            # Clean thinking tags
+            import re
+            response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            response_text = re.sub(r'<thinking>.*?</thinking>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
+            return response_text.strip()
         except Exception as e:
             print(f"Anthropic error: {e}")
     

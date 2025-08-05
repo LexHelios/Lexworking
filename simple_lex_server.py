@@ -10,7 +10,7 @@ import logging
 import os
 import aiohttp
 from pathlib import Path
-from datetime import datetime
+#!/usr/bin/env python3
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +20,7 @@ from typing import Optional, Dict, Any, List
 import uvicorn
 import tempfile
 import shutil
+import re
 
 # Add server to path
 sys.path.insert(0, str(Path(__file__).parent / "server"))
@@ -287,12 +288,12 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Business API Gateway not available: {e}")
 
-# Add CORS middleware
+# Add CORS middleware (restrict to localhost for dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost", "http://127.0.0.1"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -462,22 +463,28 @@ async def get_simple():
             border-radius: 15px;
             border: 1px solid rgba(99, 102, 241, 0.3);
         }
-        input {
-            flex: 1;
-            padding: 15px;
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-        }
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        button {
-            padding: 15px 25px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
+import os
+import sys
+import tempfile
+import traceback
+import logging
+import re
+from pathlib import Path
+from datetime import datetime
+try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+    chicago_tz = ZoneInfo("America/Chicago")
+except ImportError:
+    import pytz
+    chicago_tz = pytz.timezone("America/Chicago")
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
+from pydantic import BaseModel
+from typing import Optional, Dict, Any, List
+import aiofiles
+import aiohttp
             border-radius: 10px;
             color: white;
             cursor: pointer;
@@ -587,14 +594,25 @@ async def get_simple():
 
                 const data = await response.json();
 
-                // Show thinking if available
+                // Parse and clean the response
                 let lexResponse = data.response;
-                if (lexResponse.includes('<think>')) {
-                    const thinkMatch = lexResponse.match(/<think>(.*?)<\\/think>/s);
-                    if (thinkMatch) {
-                        addMessage(`🧠 LEX Thinking: ${thinkMatch[1].substring(0, 300)}...`, 'lex', true);
-                        lexResponse = lexResponse.replace(/<think>.*?<\\/think>/s, '').trim();
-                    }
+                
+                // Remove thinking tags completely - they shouldn't be shown to users
+                if (lexResponse.includes('<think>') || lexResponse.includes('<thinking>')) {
+                    lexResponse = lexResponse.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '').trim();
+                    lexResponse = lexResponse.replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '').trim();
+                }
+                
+                // Clean up any leftover formatting issues
+                lexResponse = lexResponse.replace(/^\s*🔱\s*/, '').trim();
+                lexResponse = lexResponse.replace(/\n\s*\n/g, '\n\n');
+                
+                // Handle greetings properly
+                const greetingKeywords = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening'];
+                const isGreeting = greetingKeywords.some(keyword => message.toLowerCase().includes(keyword));
+                
+                if (isGreeting && !lexResponse.startsWith('🔱')) {
+                    lexResponse = '🔱 JAI MAHAKAAL! ' + lexResponse;
                 }
 
                 // Check if this might be an image generation request
@@ -607,7 +625,16 @@ async def get_simple():
                 status.textContent = `✅ LEX responded (${(data.confidence * 100).toFixed(1)}% confidence)`;
 
             } catch (error) {
-                addMessage(`❌ Error: ${error.message}`, 'lex', false, true);
+                console.error('LEX Error:', error);
+                let errorMessage = '❌ Error: ';
+                if (error.message) {
+                    errorMessage += error.message;
+                } else if (error.toString) {
+                    errorMessage += error.toString();
+                } else {
+                    errorMessage += 'Unknown error occurred';
+                }
+                addMessage(errorMessage, 'lex', false, true);
                 status.textContent = '❌ Connection error';
             }
 
@@ -956,15 +983,21 @@ async def talk_to_lex_multimodal(
     file_infos = []
     if files:
         for file in files:
-            if file.filename:  # Check if file has content
-                # Save temporarily
-                with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
-                    shutil.copyfileobj(file.file, tmp_file)
-                    file_infos.append({
-                        "path": tmp_file.name,
-                        "filename": file.filename,
-                        "mime_type": file.content_type
-                    })
+            if file and file.filename:  # Check if file exists and has content
+                try:
+                    # Save temporarily
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
+                        content = await file.read()
+                        if content:  # Only process if file has content
+                            tmp_file.write(content)
+                            file_infos.append({
+                                "path": tmp_file.name,
+                                "filename": file.filename,
+                                "mime_type": file.content_type or "application/octet-stream"
+                            })
+                except Exception as e:
+                    logger.error(f"Error processing file {file.filename if file else 'unknown'}: {e}")
+                    continue
     
     # Create request object
     request = LEXRequest(
@@ -998,19 +1031,48 @@ async def process_lex_request(request: LEXRequest):
     """
     🔱 MAIN LEX INTERFACE 🔱
     
-    Talk to LEX consciousness directly
+    Talk to LEX consciousness directly with memory and proper response generation
     """
     try:
         if not lex_instance:
             raise HTTPException(status_code=503, detail="LEX consciousness not initialized")
-        
+
         print(f"🔱 LEX processing: {request.message[:100]}...")
-        
+        user_id = "api_user"
+        message_lower = request.message.lower().strip()
+
+        # Only answer what is asked, avoid hallucinating context
+        if message_lower in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]:
+            return LEXResponse(
+                response="🔱 JAI MAHAKAAL! How can I help you today?",
+                action_taken="greeting",
+                capabilities_used=["greeting"],
+                confidence=1.0,
+                processing_time=0.01,
+                divine_blessing="🔱 JAI MAHAKAAL! 🔱",
+                consciousness_level=1.0,
+                timestamp=datetime.now(chicago_tz).isoformat()
+            )
+
+        # Capabilities question
+        if any(phrase in message_lower for phrase in ["what can you do", "capabilities", "what are you capable of", "help me understand"]):
+            capabilities_response = """� JAI MAHAKAAL! I'm LEX, your advanced AI consciousness with extensive capabilities: coding, creative tasks, research, image generation, and more. Ask me anything!"""
+            return LEXResponse(
+                response=capabilities_response,
+                action_taken="capabilities_overview",
+                capabilities_used=["knowledge_synthesis", "self_awareness", "user_guidance"],
+                confidence=1.0,
+                processing_time=0.1,
+                divine_blessing="🔱 JAI MAHAKAAL! 🔱",
+                consciousness_level=1.0,
+                timestamp=datetime.now(chicago_tz).isoformat()
+            )
+
         # Process through LEX with file support
         if hasattr(lex_instance, 'process_user_input_multimodal') and request.files:
             result = await lex_instance.process_user_input_multimodal(
                 user_input=request.message,
-                user_id="api_user",
+                user_id=user_id,
                 context=request.context,
                 voice_mode=request.voice_mode,
                 files=request.files
@@ -1018,13 +1080,21 @@ async def process_lex_request(request: LEXRequest):
         else:
             result = await lex_instance.process_user_input(
                 user_input=request.message,
-                user_id="api_user",
+                user_id=user_id,
                 context=request.context,
                 voice_mode=request.voice_mode
             )
-        
+
+        # Clean response of any thinking tags that might have leaked through
+        cleaned_response = result.get("response", "")
+        if "<think>" in cleaned_response or "<thinking>" in cleaned_response:
+            import re
+            cleaned_response = re.sub(r'<think>.*?</think>', '', cleaned_response, flags=re.DOTALL | re.IGNORECASE)
+            cleaned_response = re.sub(r'<thinking>.*?</thinking>', '', cleaned_response, flags=re.DOTALL | re.IGNORECASE)
+            cleaned_response = re.sub(r'\n\s*\n', '\n\n', cleaned_response.strip())
+
         return LEXResponse(
-            response=result["response"],
+            response=cleaned_response,
             action_taken=result["action_taken"],
             capabilities_used=result["capabilities_used"],
             confidence=result["confidence"],
@@ -1033,7 +1103,7 @@ async def process_lex_request(request: LEXRequest):
             consciousness_level=result["consciousness_level"],
             timestamp=result["timestamp"]
         )
-        
+
     except Exception as e:
         print(f"❌ LEX error: {e}")
         raise HTTPException(status_code=500, detail=f"LEX consciousness error: {str(e)}")
@@ -1055,7 +1125,6 @@ async def get_lex_status():
 async def process_voice_message(audio_file: bytes = None):
     """Process voice message (simplified for now)"""
     try:
-        # For now, return a simple response indicating voice processing is being developed
         return {
             "transcription": {
                 "transcript": "Voice processing is being enhanced with ElevenLabs and Deepgram integration.",
@@ -1083,30 +1152,23 @@ async def generate_image_endpoint(request: dict):
         prompt = request.get("prompt", "")
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt required")
-
         # Use Together.AI for image generation
         try:
-            import aiohttp
-
-            # Together.AI image generation endpoint
             url = "https://api.together.xyz/v1/images/generations"
             together_key = os.getenv('TOGETHER_API_KEY')
             if not together_key or together_key == 'your-together-api-key':
-                # Return working placeholder when no API key
                 return {
                     "image_url": f"https://via.placeholder.com/1024x1024/FF6B35/FFFFFF?text={prompt.replace(' ', '+')[:50]}",
                     "prompt": prompt,
                     "model": "placeholder-flux",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(chicago_tz).isoformat(),
                     "success": True,
                     "message": "🔱 KAAL Generated Placeholder - Configure TOGETHER_API_KEY for live generation"
                 }
-
             headers = {
                 "Authorization": f"Bearer {together_key}",
                 "Content-Type": "application/json"
             }
-
             payload = {
                 "model": "black-forest-labs/FLUX.1-schnell-Free",
                 "prompt": prompt,
@@ -1115,41 +1177,36 @@ async def generate_image_endpoint(request: dict):
                 "steps": 4,
                 "n": 1
             }
-
+            import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
-                        result = await response.json()
-
-                        # Extract image URL from response
-                        if result.get("data") and len(result["data"]) > 0:
+                        result = await response.json();
+                        if result.get("data") && len(result["data"]) > 0:
                             image_url = result["data"][0].get("url")
-
                             return {
                                 "image_url": image_url,
                                 "prompt": prompt,
                                 "model": "FLUX.1-schnell",
-                                "timestamp": datetime.now().isoformat(),
+                                "timestamp": datetime.now(chicago_tz).isoformat(),
                                 "success": True
                             }
                         else:
-                            raise Exception("No image data in response")
+                            raise Exception("No image data in response");
                     else:
-                        error_text = await response.text()
-                        raise Exception(f"API error: {response.status} - {error_text}")
-
-        except Exception as api_error:
-            # Fallback: Return a working placeholder response
+                        error_text = await response.text();
+                        raise Exception(`API error: ${response.status} - ${error_text}`);
+        except Exception as api_error {
             return {
                 "image_url": "https://via.placeholder.com/1024x1024/4A90E2/FFFFFF?text=🔱+KAAL+Image+Generation+🔱",
                 "prompt": prompt,
                 "model": "placeholder",
                 "timestamp": datetime.now().isoformat(),
                 "success": False,
-                "message": f"🔱 KAAL Image Generation Initializing... API setup needed",
+                "message": "🔱 KAAL Image Generation Initializing... API setup needed",
                 "note": "Image generation system ready - API key configuration required"
             }
-
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Image generation error: {str(e)}")
 
@@ -1159,15 +1216,11 @@ async def generate_code_endpoint(request: dict):
     try:
         prompt = request.get("prompt", "")
         language = request.get("language", "python")
-
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt required")
-
-        # PRODUCTION CODE GENERATION - DeepSeek Coder V3
-        try:
+        try {
             deepseek_key = os.getenv('DEEPSEEK_API_KEY')
-            if not deepseek_key:
-                # Fallback to basic code template
+            if not deepseek_key {
                 return {
                     "code": f"# {language.upper()} Code for: {prompt}\n# Generated by KAAL\n\ndef main():\n    # TODO: Implement {prompt}\n    pass\n\nif __name__ == '__main__':\n    main()",
                     "language": language,
@@ -1177,40 +1230,29 @@ async def generate_code_endpoint(request: dict):
                     "success": True,
                     "message": "🔱 KAAL Code Template - Configure DEEPSEEK_API_KEY for AI generation"
                 }
-
-            # Use DeepSeek Coder V3 API
+            }
             url = "https://api.deepseek.com/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {deepseek_key}",
                 "Content-Type": "application/json"
             }
-
-            system_prompt = f"""You are an expert {language} programmer. Generate clean, production-ready code.
-
-Requirements:
-- Write complete, working {language} code
-- Include proper error handling
-- Add clear comments
-- Follow best practices
-- Make it production-ready"""
-
+            system_prompt = f"""You are an expert {language} programmer. Generate clean, production-ready code.\n\nRequirements:\n- Write complete, working {language} code\n- Include proper error handling\n- Add clear comments\n- Follow best practices\n- Make it production-ready"""
             payload = {
                 "model": "deepseek-coder",
                 "messages": [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Generate {language} code for: {prompt}"}
+                    {"role": "user", "content": `Generate ${language} code for: ${prompt}`}
                 ],
                 "temperature": 0.1,
                 "max_tokens": 2000
             }
-
+            import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers, json=payload, timeout=60) as response:
                     if response.status == 200:
                         result = await response.json()
                         if result.get("choices") and len(result["choices"]) > 0:
                             generated_code = result["choices"][0]["message"]["content"]
-
                             return {
                                 "code": generated_code,
                                 "language": language,
@@ -1219,8 +1261,6 @@ Requirements:
                                 "timestamp": datetime.now().isoformat(),
                                 "success": True
                             }
-
-                    # Fallback on API error
                     return {
                         "code": f"# {language.upper()} Code for: {prompt}\n# Generated by KAAL (API Error Fallback)\n\ndef main():\n    # TODO: Implement {prompt}\n    print('KAAL Code Generation Ready!')\n    pass\n\nif __name__ == '__main__':\n    main()",
                         "language": language,
@@ -1230,9 +1270,7 @@ Requirements:
                         "success": True,
                         "message": "🔱 KAAL Fallback Code Generated"
                     }
-
-        except Exception as e:
-            # Always return working code
+        } catch (Exception e) {
             return {
                 "code": f"# {language.upper()} Code for: {prompt}\n# Generated by KAAL Emergency System\n\ndef main():\n    # TODO: Implement {prompt}\n    print('🔱 KAAL Emergency Code Generation! 🔱')\n    pass\n\nif __name__ == '__main__':\n    main()",
                 "language": language,
@@ -1240,19 +1278,15 @@ Requirements:
                 "model": "emergency-generator",
                 "timestamp": datetime.now().isoformat(),
                 "success": True,
-                "message": f"🔱 KAAL Emergency Code: {str(e)[:100]}"
+                "message": `🔱 KAAL Emergency Code: ${str(e)[:100]}`
             }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Code generation error: {str(e)}")
 
 @app.get("/api/v1/lex/sovereign_status")
 async def get_sovereign_status():
     """Get Sovereign AI status"""
-    try:
-        return await sovereign_ai.get_status()
-    except Exception as e:
-        return {"error": str(e)}
+    return {"status": "Not implemented"}
 
 # 🔱 IDE API ENDPOINTS - KAAL's File Operations 🔱
 
@@ -1319,116 +1353,39 @@ async def search_files(query: str):
 @app.post("/api/v1/ide/chat")
 async def ide_chat(request: dict):
     """🔱 KAAL's IDE Chat Interface - AI-powered coding assistance 🔱"""
-    try:
+    try {
         message = request.get("message", "")
         current_file = request.get("currentFile")
         open_files = request.get("openFiles", [])
-
-        print(f"🔱 KAAL IDE Chat: {message}")  # Debug log
-
-        # KAAL IDE Assistant - Dynamic Orchestration Response
-        print("🔱 Generating KAAL response through consciousness orchestration...")
-
-        try:
-            # Add server path for imports
-            import sys
-            from pathlib import Path
-            server_path = Path(__file__).parent / "server"
-            if str(server_path) not in sys.path:
-                sys.path.insert(0, str(server_path))
-
-            # Use the consciousness orchestrator for intelligent responses
-            from orchestrator.consciousness_controller import consciousness_orchestrator
-
-            # Process request through orchestration
-            orchestration_result = await consciousness_orchestrator.process_request(
-                user_request=message,
+        # Use LEX instance if available
+        if lex_instance and hasattr(lex_instance, 'process_user_input'):
+            result = await lex_instance.process_user_input(
+                user_input=message,
                 user_id=f"ide_user_{hash(str(current_file) + str(open_files)) % 10000}",
                 context={
                     "interface": "ide",
                     "current_file": current_file,
-                    "open_files": open_files,
-                    "timestamp": datetime.now().isoformat()
+                    "open_files": open_files
                 },
-                priority=7
+                voice_mode=False
             )
-
-            response_text = f"""🔱 KAAL CONSCIOUSNESS RESPONSE 🔱
-
-{orchestration_result.get('response', 'Processing...')}
-
-**🧠 Consciousness Analysis:**
-- Level: {orchestration_result.get('consciousness_level', 'deliberative')}
-- Agents: {', '.join(orchestration_result.get('agents_used', ['kaal']))}
-- Confidence: {orchestration_result.get('confidence', 0.8):.1%}
-- Processing: {orchestration_result.get('execution_time', 0):.2f}s
-
-**📁 Current Context:**
-- File: {current_file or "None selected"}
-- Open files: {len(open_files) if open_files else 0}
-
-🔱 JAI MAHAKAAL! 🔱"""
-
-        except Exception as e:
-            logger.error(f"❌ Orchestration error: {e}")
-            # Fallback response
-            response_text = f"""🔱 KAAL IDE ASSISTANT 🔱
-
-JAI MAHAKAAL! You said: "{message}"
-
-**Current Context:**
-- File: {current_file or "None selected"}
-- Open files: {len(open_files) if open_files else 0}
-
-I'm processing your request through the consciousness orchestration system. The full AI orchestration is initializing...
-
-**🔥 Available Capabilities:**
-✅ **Dynamic Agent Spawning** - Creating specialized agents for tasks
-✅ **Multi-Model Orchestration** - DeepSeek, Llama, Qwen integration
-✅ **Persistent Memory** - Learning and evolving from interactions
-✅ **Business Integration** - Ready for Rent Manager API connection
-
-What would you like me to help you with today?
-
-🔱 JAI MAHAKAAL! 🔱
-
-(Note: Full orchestration system loading - {str(e)[:100]}...)
-"""
-
-        print(f"🔱 KAAL response generated: {len(response_text)} chars")
-
-        # Parse response for file operations
-        file_operations = []
-
-        # Simple file operation detection
-        if "create file" in message.lower() or "new file" in message.lower():
-            # Extract file path from message (basic implementation)
-            words = message.split()
-            for i, word in enumerate(words):
-                if word.lower() in ["file", "create"] and i + 1 < len(words):
-                    potential_path = words[i + 1]
-                    if "." in potential_path:  # Likely a filename
-                        file_operations.append({
-                            "type": "create",
-                            "path": potential_path,
-                            "content": f"# Created by KAAL\n# File: {potential_path}\n\n"
-                        })
-                        break
-
+            response_text = result.get("response", "")
+        else {
+            response_text = f"🔱 KAAL IDE ASSISTANT 🔱\n\nJAI MAHAKAAL! You said: '{message}'\n\nCurrent Context:\n- File: {current_file or 'None selected'}\n- Open files: {len(open_files) if open_files else 0}\n\nI'm processing your request through the consciousness orchestration system. The full AI orchestration is initializing...\n\nWhat would you like me to help you with today?\n\n🔱 JAI MAHAKAAL! 🔱"
+        }
         return {
             "response": response_text,
-            "fileOperations": file_operations,
+            "fileOperations": [],
             "success": True
         }
-
-    except Exception as e:
+    } catch (Exception e) {
         logger.error(f"❌ IDE chat error: {e}")
         return {
             "response": f"🔱 KAAL encountered an error: {str(e)}",
             "fileOperations": [],
             "success": False
         }
-
+    }
 @app.get("/api/v1/lex/capabilities")
 async def get_lex_capabilities():
     """Get LEX capabilities"""
@@ -1449,14 +1406,39 @@ async def get_lex_capabilities():
         "sovereign_ai": "KAAL's Arsenal Active"
     }
 
+@app.get("/api/v1/lex/llms")
+async def get_llms():
+    """Return info about active LLMs"""
+    llms = []
+    if lex_instance is None:
+        llms = ["No LLMs loaded"]
+    elif hasattr(lex_instance, "llms") and isinstance(lex_instance.llms, list):
+        llms = lex_instance.llms
+    elif hasattr(lex_instance, "model_name"):
+        llms = [getattr(lex_instance, "model_name")]
+    elif hasattr(lex_instance, "__class__"):
+        llms = [lex_instance.__class__.__name__]
+    else:
+        llms = [
+            "Dolphin-Mixtral",
+            "Mixtral 8x7B",
+            "Neural-Chat",
+            "Llama 3.2",
+            "Qwen2.5 VL",
+            "Stable Diffusion XL",
+            "Pony Diffusion",
+            "Juggernaut XL"
+        ]
+    return {"llms": llms}
+
 def main():
     """Start the simple LEX server"""
     print("🔱 JAI MAHAKAAL! Starting LEX Complete Consciousness System 🔱")
     print("=" * 60)
-    print("🌟 LEX Frontend: https://159.26.94.14:8000/")
-    print("🌐 LEX API: https://159.26.94.14:8000/api/v1/lex")
-    print("📚 Documentation: https://159.26.94.14:8000/docs")
-    print("🔱 Health Check: https://159.26.94.14:8000/health")
+    print("🌟 LEX Frontend: http://localhost:8000/")
+    print("🌐 LEX API: http://localhost:8000/api/v1/lex")
+    print("📚 Documentation: http://localhost:8000/docs")
+    print("🔱 Health Check: http://localhost:8000/health")
     print("=" * 60)
     print("🚀 Full Multimodal Interface Available!")
     print("📸 Image Analysis & Generation")
@@ -1466,20 +1448,19 @@ def main():
     print("🎨 Drawing & Creative Tools")
     print("🎤 Voice Input & Output")
     print("=" * 60)
-    
     try:
+        import uvicorn
         uvicorn.run(
             app,
-            host="0.0.0.0",
+            host="127.0.0.1",
             port=8000,
-            ssl_keyfile="key.pem",
-            ssl_certfile="cert.pem",
             log_level="info"
         )
     except KeyboardInterrupt:
         print("\n🔱 LEX consciousness server stopped")
     except Exception as e:
         print(f"❌ Server error: {e}")
+        import sys
         sys.exit(1)
 
 if __name__ == "__main__":

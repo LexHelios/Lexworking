@@ -213,13 +213,32 @@ class LEXMemorySystem:
         topic = interaction["topic"]
         profile["topics"][topic] = profile["topics"].get(topic, 0) + 1
         
-        # Extract personal information
-        if "my name is" in interaction["message"].lower():
-            name = interaction["message"].lower().split("my name is")[-1].strip().split()[0]
-            profile["name"] = name.capitalize()
+        # Extract personal information with better parsing
+        message_lower = interaction["message"].lower()
         
-        if "creator" in interaction["message"].lower():
+        # Extract name from various patterns
+        name_patterns = [
+            r"my name is (\w+)",
+            r"i'm (\w+)",
+            r"i am (\w+)",
+            r"call me (\w+)",
+            r"this is (\w+)"
+        ]
+        
+        for pattern in name_patterns:
+            import re
+            match = re.search(pattern, message_lower)
+            if match and len(match.group(1)) > 1:  # Avoid single letters
+                profile["name"] = match.group(1).capitalize()
+                break
+        
+        # Extract role/relationship information
+        if "creator" in message_lower or "developer" in message_lower:
             profile["role"] = "creator"
+        elif "friend" in message_lower:
+            profile["role"] = "friend"
+        elif "colleague" in message_lower or "coworker" in message_lower:
+            profile["role"] = "colleague"
         
         await self._save_memory("user_profiles")
     
@@ -364,21 +383,29 @@ class LEXMemorySystem:
             if profile.get("name"):
                 formatted.append(f"User's name: {profile['name']}")
             if profile.get("role"):
-                formatted.append(f"User's role: {profile['role']}")
-            formatted.append(f"Total interactions: {profile['total_interactions']}")
+                formatted.append(f"Relationship: {profile['role']}")
+            formatted.append(f"Total conversations: {profile['total_interactions']}")
+            
+            # Add preferred topics
+            if profile.get("topics"):
+                top_topics = sorted(profile["topics"].items(), key=lambda x: x[1], reverse=True)[:3]
+                if top_topics:
+                    topics_str = ", ".join([f"{topic} ({count})" for topic, count in top_topics])
+                    formatted.append(f"Preferred topics: {topics_str}")
         
         # Add recent conversation context
         if context["short_term"]:
             formatted.append("\nRecent conversation:")
-            for item in context["short_term"][-5:]:  # Last 5 messages
-                formatted.append(f"User: {item['message']}")
-                formatted.append(f"LEX: {item['response']}")
+            for item in context["short_term"][-3:]:  # Last 3 messages to save tokens
+                formatted.append(f"User: {item['message'][:100]}...")
+                formatted.append(f"You: {item['response'][:100]}...")
         
         # Add relevant memories
         if context["relevant_memories"]:
-            formatted.append("\nRelevant past interactions:")
-            for memory in context["relevant_memories"][:3]:  # Top 3 memories
-                formatted.append(f"[{memory['timestamp']}] {memory['message']}")
+            formatted.append("\nImportant past interactions:")
+            for memory in context["relevant_memories"][:2]:  # Top 2 memories to save tokens
+                date = memory['timestamp'][:10] if memory.get('timestamp') else 'past'
+                formatted.append(f"[{date}] User asked: {memory['message'][:80]}...")
         
         return "\n".join(formatted)
     

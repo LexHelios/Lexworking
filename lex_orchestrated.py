@@ -65,6 +65,18 @@ class OrchestratedLEX:
         # Format response
         response_text = result.get("response", "")
         
+        # Clean up thinking tags if present
+        import re
+        if '<think>' in response_text:
+            response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
+        
+        # Handle greetings properly
+        greeting_keywords = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening']
+        is_greeting = any(keyword in user_input.lower() for keyword in greeting_keywords)
+        
+        if is_greeting and not response_text.startswith('🔱'):
+            response_text = '🔱 JAI MAHAKAAL! ' + response_text
+        
         # Add orchestration insights to response if in debug mode
         if context and context.get("debug", False):
             insights = f"\n\n---\n🧠 Orchestration Details:\n"

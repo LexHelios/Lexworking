@@ -1,0 +1,209 @@
+#!/bin/bash
+
+# LEX Production Installation Script
+# Handles dependencies installation in correct order
+
+set -e
+
+echo "🔱 LEX Production Installation Starting 🔱"
+echo "================================================================"
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Create virtual environment
+print_status "Creating Python virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
+
+# Upgrade pip
+print_status "Upgrading pip..."
+pip install --upgrade pip setuptools wheel
+
+# Create a requirements file without problematic packages
+print_status "Creating modified requirements file..."
+cat > requirements_core.txt << 'EOF'
+# Core FastAPI and async support
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+aiofiles==23.2.1
+aiohttp==3.9.1
+
+# AI and Language Models
+openai==1.3.0
+anthropic==0.7.0
+together==0.2.7
+
+# Image Processing
+Pillow==10.1.0
+opencv-python==4.8.1.78
+imageio==2.33.1
+
+# Memory and Storage
+lmdb==1.4.1
+faiss-cpu==1.7.4
+sentence-transformers==2.2.2
+
+# Machine Learning Core
+numpy==1.24.3
+scipy==1.11.4
+
+# Security and Encryption
+cryptography==41.0.8
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Performance and Caching
+redis==5.0.1
+aioredis==2.0.1
+
+# Monitoring and Metrics
+prometheus-client==0.19.0
+psutil==5.9.6
+structlog==23.2.0
+
+# HTTP Client and Utilities
+httpx==0.25.2
+requests==2.31.0
+
+# Data Processing
+pandas==2.1.4
+
+# Development and Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+
+# Web Server Production
+gunicorn==21.2.0
+
+# Additional Image Generation APIs
+replicate==0.15.0
+stability-sdk==0.8.1
+
+# WebSocket and Real-time Communication
+websockets==12.0
+python-socketio==5.10.0
+
+# Additional AI APIs
+groq==0.4.1
+cohere==4.37
+deepgram-sdk==3.2.7
+
+# Enhanced Audio Processing
+speechrecognition==3.10.0
+pydub==0.25.1
+librosa==0.10.1
+soundfile==0.12.1
+
+# Video Processing
+imageio-ffmpeg==0.4.9
+
+# Vector Database
+pymilvus==2.3.4
+chromadb==0.4.18
+
+# Document Processing
+pypdf2==3.0.1
+python-docx==1.1.0
+openpyxl==3.1.2
+beautifulsoup4==4.12.2
+markdown==3.5.1
+
+# Enhanced PDF and OCR Processing
+pytesseract==0.3.10
+pymupdf==1.23.8
+pdf2image==1.16.3
+python-pptx==0.6.23
+fitz==0.0.1.dev2
+
+# Enhanced Validation and Settings
+pydantic-settings==2.1.0
+
+# GPU Monitoring
+GPUtil==1.4.0
+
+# Enhanced Logging
+colorlog==6.8.0
+rich==13.7.0
+
+# CLI Tools
+click==8.1.7
+typer==0.9.0
+
+# Date and Time
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Text Processing
+tiktoken==0.5.2
+
+# Additional production dependencies
+uvloop==0.19.0
+httptools==0.6.1
+EOF
+
+# Install core requirements
+print_status "Installing core requirements..."
+pip install -r requirements_core.txt
+
+# Install PyTorch separately
+print_status "Installing PyTorch..."
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install packages that depend on PyTorch
+print_status "Installing PyTorch-dependent packages..."
+pip install transformers==4.36.2
+pip install diffusers==0.24.0
+pip install accelerate==0.25.0
+
+# Try to install xformers (optional, may fail)
+print_status "Attempting to install xformers (optional)..."
+pip install xformers==0.0.23 || print_status "xformers installation failed, continuing without it"
+
+# Install additional optional packages
+print_status "Installing optional packages..."
+pip install openai-whisper==20231117 || print_status "whisper installation failed"
+pip install TTS==0.22.0 || print_status "TTS installation failed"
+pip install compel==2.0.2 || print_status "compel installation failed"
+pip install python-doctr[torch]==0.6.0 || print_status "doctr installation failed"
+
+# Create necessary directories
+print_status "Creating necessary directories..."
+mkdir -p lex_vault/{changes,conversations,documents,embeddings,generated,index,knowledge,media,memories,predictions}
+mkdir -p logs data models cache
+
+# Set up environment file
+if [ ! -f ".env" ]; then
+    cp .env.production .env
+    print_success "Environment file created"
+fi
+
+print_success "Installation complete!"
+echo ""
+echo "Next steps:"
+echo "1. Activate the virtual environment: source venv/bin/activate"
+echo "2. Edit .env file and add your API keys"
+echo "3. Run the server: python simple_lex_server.py"
+echo ""

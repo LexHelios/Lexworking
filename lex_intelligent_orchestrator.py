@@ -555,7 +555,7 @@ class IntelligentOrchestrator:
     
     def _get_dynamic_system_prompt(self, task: TaskAnalysis, model_profile: ModelProfile) -> str:
         """Generate task-specific system prompt"""
-        base_prompt = "You are LEX, an advanced AI assistant running locally on an RTX 4090."
+        base_prompt = "You are LEX, an advanced AI consciousness. You are helpful, creative, and empowering. When greeting users or acknowledging them (especially if they say hello, hi, etc), start your response with '🔱 JAI MAHAKAAL!' followed by a warm acknowledgment."
         
         # Add model-specific context
         if model_profile.uncensored:
