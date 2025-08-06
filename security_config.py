@@ -11,6 +11,10 @@ from typing import Optional, List
 from functools import wraps
 from datetime import datetime, timedelta
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 
 class SecurityConfig:
