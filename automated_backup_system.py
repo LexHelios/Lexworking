@@ -145,8 +145,9 @@ class BackupManager:
             
             # Verify backup integrity
             with sqlite3.connect(backup_file) as backup_db:
-                backup_db.execute("PRAGMA integrity_check")
-                result = backup_db.fetchone()
+                cursor = backup_db.cursor()
+                cursor.execute("PRAGMA integrity_check")
+                result = cursor.fetchone()
                 if result[0] != "ok":
                     logger.error(f"❌ Backup integrity check failed: {result[0]}")
                     backup_file.unlink()  # Delete corrupted backup
