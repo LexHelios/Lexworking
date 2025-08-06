@@ -1,0 +1,12 @@
+{
+  "blue_env": {
+    "is_active": false,
+    "port": 8000
+  },
+  "green_env": {
+    "is_active": false,
+    "port": 8001
+  },
+  "deployment_status": "rolling_back",
+  "last_updated": "2025-08-06T23:27:53.491789"
+}

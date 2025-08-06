@@ -1,0 +1,14 @@
+{
+  "deployment_id": "deploy_20250806_232753",
+  "start_time": "2025-08-06T23:27:53.214642",
+  "phase": "failed",
+  "completed_phases": [
+    "initialization"
+  ],
+  "failed_phases": [],
+  "rollback_initiated": true,
+  "backup_created": null,
+  "health_checks_passed": false,
+  "monitoring_active": false,
+  "last_updated": "2025-08-06T23:27:53.509364"
+}
