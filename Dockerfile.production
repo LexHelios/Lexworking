@@ -1,187 +1,148 @@
+# LEX AI Production Docker Image
+# 🔱 JAI MAHAKAAL! Multi-stage production build
 
-# Multi-stage production Dockerfile for LexOS API
-# Optimized for H100 GPU deployment
+# ==================== BUILD STAGE ====================
+FROM python:3.11-slim as builder
 
-# Stage 1: Base Python image with CUDA support
-FROM nvidia/cuda:12.2-devel-ubuntu22.04 as base
+# Set build arguments
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-dev \
-    python3.11-distutils \
-    python3-pip \
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    wget \
-    git \
-    libpq-dev \
-    libssl-dev \
-    libffi-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libwebp-dev \
-    libopencv-dev \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    ca-certificates \
-    gnupg \
-    lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# Create symlink for python
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python
-
-# Upgrade pip
-RUN python -m pip install --upgrade pip setuptools wheel
-
-# Stage 2: Dependencies installation
-FROM base as dependencies
+# Create build user
+RUN useradd --create-home --shell /bin/bash builder
+USER builder
+WORKDIR /home/builder
 
 # Copy requirements first for better caching
-COPY requirements.txt requirements_h100.txt ./
+COPY requirements.txt requirements_security.txt ./
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements_h100.txt
+RUN pip install --user --no-cache-dir --disable-pip-version-check \
+    -r requirements.txt -r requirements_security.txt
 
-# Install additional production dependencies
-RUN pip install --no-cache-dir \
-    gunicorn[gevent]==21.2.0 \
-    prometheus-client==0.19.0 \
-    sentry-sdk[fastapi]==1.38.0 \
-    structlog==23.2.0 \
-    uvloop==0.19.0 \
-    httptools==0.6.1 \
-    python-multipart==0.0.6 \
-    aiofiles==23.2.1 \
-    aiocache[redis]==0.12.2 \
-    celery[redis]==5.3.4 \
-    flower==2.0.1
+# ==================== PRODUCTION STAGE ====================
+FROM python:3.11-slim as production
 
-# Stage 3: Application build
-FROM dependencies as builder
+# Metadata
+LABEL maintainer="LEX AI Team"
+LABEL version="1.0.0"
+LABEL description="LEX AI Production Server - Security Hardened"
 
-# Set working directory
-WORKDIR /app
+# Set production environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV ENV=production
+ENV PATH="/home/lex/.local/bin:$PATH"
 
-# Copy source code
-COPY server/ ./server/
-COPY frontend/ ./frontend/
-COPY lex_vault/ ./lex_vault/
-COPY monitoring/ ./monitoring/
-COPY scripts/ ./scripts/
-
-# Create necessary directories
-RUN mkdir -p /app/data /app/models /app/logs /app/cache
-
-# Copy configuration files
-COPY .env.production ./
-COPY nginx.conf ./
-
-# Build frontend assets
-WORKDIR /app/frontend/modern
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && npm ci --only=production \
-    && npm run build \
-    && rm -rf node_modules
-
-# Stage 4: Production runtime
-FROM nvidia/cuda:12.2-runtime-ubuntu22.04 as production
-
-# Set environment variables for production
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app \
-    PATH="/app/.local/bin:$PATH" \
-    DEBIAN_FRONTEND=noninteractive \
-    NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-    NCCL_DEBUG=INFO \
-    OMP_NUM_THREADS=8 \
-    TORCH_CUDA_ARCH_LIST=9.0
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-distutils \
-    python3-pip \
-    libpq5 \
-    libssl3 \
-    libffi8 \
-    libjpeg8 \
-    libpng16-16 \
-    libwebp7 \
-    libopencv-core4.5d \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    libglib2.0-0 \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create symlink for python
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python
-
-# Create non-root user
-RUN groupadd -r lexos && useradd -r -g lexos -u 1000 lexos
-
-# Set working directory
-WORKDIR /app
-
-# Copy Python dependencies from builder stage
-COPY --from=dependencies /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
-COPY --from=dependencies /usr/local/bin /usr/local/bin
-
-# Copy application code from builder stage
-COPY --from=builder --chown=lexos:lexos /app /app
-
-# Create and set permissions for data directories
-RUN mkdir -p /app/data /app/models /app/logs /app/cache /app/tmp \
-    && chown -R lexos:lexos /app \
-    && chmod -R 755 /app \
-    && chmod -R 777 /app/data /app/models /app/logs /app/cache /app/tmp
-
-# Copy startup scripts
-COPY --chown=lexos:lexos scripts/start-production.sh /app/start.sh
-COPY --chown=lexos:lexos scripts/health-check.sh /app/health-check.sh
-RUN chmod +x /app/start.sh /app/health-check.sh
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash --uid 1001 lex && \
+    mkdir -p /app/data /app/logs /app/backups /app/config && \
+    chown -R lex:lex /app
 
 # Switch to non-root user
-USER lexos
+USER lex
+WORKDIR /app
 
-# Expose ports
-EXPOSE 8000 8001 8002
+# Copy Python packages from builder stage
+COPY --from=builder /home/builder/.local /home/lex/.local
 
-# Health check
+# Copy application code
+COPY --chown=lex:lex *.py ./
+COPY --chown=lex:lex .env.template ./
+COPY --chown=lex:lex frontend/ ./frontend/
+
+# Copy server orchestrator if exists
+COPY --chown=lex:lex --from=. server/ ./server/ 2>/dev/null || true
+
+# Create necessary directories with proper permissions
+RUN mkdir -p data logs backups config temp && \
+    chmod 755 data logs backups config temp
+
+# Set up logging directory
+RUN touch logs/lex.log logs/lex_production.log && \
+    chmod 644 logs/*.log
+
+# Create health check script
+COPY --chown=lex:lex <<'EOF' /app/healthcheck.sh
+#!/bin/bash
+# Health check script for LEX container
+set -e
+
+# Check if the main process is running
+if ! pgrep -f "lex_production_secure.py" > /dev/null; then
+    echo "❌ LEX process not running"
+    exit 1
+fi
+
+# Check HTTP endpoint
+if ! curl -f -s http://localhost:8000/health > /dev/null; then
+    echo "❌ HTTP health check failed"
+    exit 1
+fi
+
+echo "✅ LEX container healthy"
+exit 0
+EOF
+
+RUN chmod +x /app/healthcheck.sh
+
+# Create startup script
+COPY --chown=lex:lex <<'EOF' /app/start_production.sh
+#!/bin/bash
+# Production startup script
+set -e
+
+echo "🔱 JAI MAHAKAAL! Starting LEX Production Container 🔱"
+
+# Validate environment
+if [ -z "$OPENROUTER_API_KEY" ]; then
+    echo "❌ OPENROUTER_API_KEY not set"
+    exit 1
+fi
+
+# Create .env file from template if it doesn't exist
+if [ ! -f .env ] && [ -f .env.template ]; then
+    echo "📄 Creating .env from template..."
+    cp .env.template .env
+fi
+
+# Initialize/optimize database
+echo "🗃️ Optimizing database..."
+python3 database_optimizer.py --optimize || echo "⚠️ Database optimization failed, continuing..."
+
+# Start monitoring in background
+echo "📊 Starting monitoring..."
+nohup python3 production_monitor.py --daemon > logs/monitor.log 2>&1 &
+
+# Start main application
+echo "🚀 Starting LEX Production Server..."
+exec python3 lex_production_secure.py
+EOF
+
+RUN chmod +x /app/start_production.sh
+
+# Expose port
+EXPOSE 8000
+
+# Health check configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD /app/health-check.sh
+    CMD /app/healthcheck.sh
 
-# Set default command
-CMD ["/app/start.sh"]
+# Production startup command
+CMD ["/app/start_production.sh"]
 
-# Labels for metadata
-LABEL maintainer="LexOS Team <team@lexos.ai>" \
-      version="2.0.0" \
-      description="LexOS AI Platform - Production Ready" \
-      org.opencontainers.image.title="LexOS API" \
-      org.opencontainers.image.description="Production-ready LexOS AI Platform optimized for H100 GPUs" \
-      org.opencontainers.image.version="2.0.0" \
-      org.opencontainers.image.vendor="LexOS" \
-      org.opencontainers.image.licenses="Proprietary" \
-      org.opencontainers.image.source="https://github.com/LexHelios/Lexworking"
+# Add build info
+RUN echo "LEX_BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> /app/build_info.txt && \
+    echo "LEX_BUILD_VERSION=1.0.0-production" >> /app/build_info.txt
