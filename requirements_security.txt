@@ -1,0 +1,43 @@
+# LEX Production Security Dependencies
+# 🔱 JAI MAHAKAAL! Security hardening requirements
+
+# Core FastAPI with security
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+aiofiles==23.2.1
+aiohttp==3.9.1
+
+# Security middleware
+slowapi==0.1.9  # Rate limiting
+python-jose[cryptography]==3.3.0  # JWT tokens
+passlib[bcrypt]==1.7.4  # Password hashing
+cryptography==41.0.8  # Encryption
+
+# HTTP client with security
+httpx==0.25.2
+requests==2.31.0
+
+# Input validation
+python-email-validator==2.1.0
+validators==0.22.0
+
+# Environment management
+python-dotenv==1.0.0
+
+# Monitoring and logging
+structlog==23.2.0
+colorlog==6.8.0
+
+# Performance monitoring
+psutil==5.9.6
+
+# Database security
+sqlalchemy==2.0.23  # If using SQL databases
+sqlite3  # Built-in, no install needed
+
+# Optional: Enhanced security
+# argon2-cffi==23.1.0  # Better password hashing
+# pyotp==2.9.0  # Two-factor authentication
+# itsdangerous==2.1.2  # Secure token generation
