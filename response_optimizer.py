@@ -235,7 +235,7 @@ class ResponseOptimizer:
             if not model:  # Only optimize if model not explicitly specified
                 optimal_model = self.select_optimal_model(prompt, context)
                 
-                if optimal_model in [m for models in self.model_config['fast_models'].keys()]:
+                if optimal_model in [model_name for model_name in self.model_config['fast_models'].keys()]:
                     self.metrics.fast_model_uses += 1
                 
                 logger.info(f"🎯 Selected optimal model: {optimal_model}")
