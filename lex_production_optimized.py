@@ -50,7 +50,7 @@ try:
     from slowapi.errors import RateLimitExceeded
     RATE_LIMITING_AVAILABLE = True
 except ImportError:
-    logger.warning("⚠️ slowapi not available - rate limiting disabled")
+    print("⚠️ slowapi not available - rate limiting disabled")
     RATE_LIMITING_AVAILABLE = False
 
 # Setup enhanced logging with performance tracking
