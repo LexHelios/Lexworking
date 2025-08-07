@@ -8,25 +8,18 @@ import {
   CardContent,
   LinearProgress,
   Chip,
-  IconButton,
-  Tooltip
+  Alert,
 } from '@mui/material';
 import {
+  TrendingUp,
   Speed,
   Memory,
-  Storage,
-  CloudSync,
-  TrendingUp,
+  Cloud,
   Psychology,
-  Cached,
-  Timer,
-  AttachMoney,
-  Refresh
+  Timeline,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 
-// Types
 interface DashboardProps {
   performanceData: any;
   connectionStats: any;
@@ -36,420 +29,309 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({
   performanceData,
   connectionStats,
-  isLoading
+  isLoading,
 }) => {
-  // Mock data for charts (in production, this would come from real metrics)
-  const performanceHistory = [
-    { time: '12:00', response: 156, cache: 45, db: 12 },
-    { time: '12:05', response: 142, cache: 52, db: 8 },
-    { time: '12:10', response: 167, cache: 38, db: 15 },
-    { time: '12:15', response: 134, cache: 61, db: 9 },
-    { time: '12:20', response: 145, cache: 48, db: 11 },
-    { time: '12:25', response: 128, cache: 67, db: 7 },
-  ];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
-  const optimizationBreakdown = [
-    { name: 'Cache Hits', value: performanceData?.cache_hit_rate || 45, color: '#10b981' },
-    { name: 'Fast Models', value: 30, color: '#6366f1' },
-    { name: 'DB Pool', value: 20, color: '#8b5cf6' },
-    { name: 'Other', value: 5, color: '#64748b' },
-  ];
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 24,
+      },
+    },
+  };
 
-  // Performance metrics cards
-  const performanceMetrics = [
-    {
-      title: 'Response Time',
-      value: `${performanceData?.average_db_query_time_ms || 12.9}ms`,
-      change: '-23%',
-      changeType: 'positive',
-      icon: <Timer />,
-      color: 'primary',
-      description: 'Average API response time'
-    },
-    {
-      title: 'Cache Hit Rate',
-      value: `${performanceData?.cache_hit_rate?.toFixed(1) || 0}%`,
-      change: '+15%',
-      changeType: 'positive',
-      icon: <Cached />,
-      color: 'success',
-      description: 'Requests served from cache'
-    },
-    {
-      title: 'Cost Savings',
-      value: `$${performanceData?.total_cost_savings_usd?.toFixed(2) || 0}`,
-      change: '+42%',
-      changeType: 'positive',
-      icon: <AttachMoney />,
-      color: 'warning',
-      description: 'Total API cost savings'
-    },
-    {
-      title: 'Active Connections',
-      value: `${performanceData?.active_connections || 0}`,
-      change: '+8%',
-      changeType: 'positive',
-      icon: <CloudSync />,
-      color: 'info',
-      description: 'Current WebSocket connections'
-    }
-  ];
-
-  const systemHealth = [
-    {
-      name: 'API Performance',
-      value: 92,
-      color: 'success',
-      description: 'Overall API response performance'
-    },
-    {
-      name: 'Cache Efficiency',
-      value: performanceData?.cache_hit_rate || 0,
-      color: performanceData?.cache_hit_rate > 40 ? 'success' : 'warning',
-      description: 'Cache utilization effectiveness'
-    },
-    {
-      name: 'Database Health',
-      value: 95,
-      color: 'success',
-      description: 'Database query performance'
-    },
-    {
-      name: 'Optimization Score',
-      value: performanceData?.optimization_effectiveness || 0,
-      color: performanceData?.optimization_effectiveness > 70 ? 'success' : 'warning',
-      description: 'Overall system optimization'
-    }
-  ];
-
-  return (
-    <Box sx={{ height: '100%', overflow: 'auto' }}>
-      {/* Header */}
-      <Box
+  const MetricCard = ({ 
+    title, 
+    value, 
+    subtitle, 
+    icon, 
+    color = 'primary',
+    progress 
+  }: any) => (
+    <motion.div variants={itemVariants}>
+      <Card
+        elevation={2}
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3
+          height: '100%',
+          background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)',
         }}
       >
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-            🔱 LEX Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Real-time system performance and optimization metrics
-          </Typography>
-        </Box>
-
-        <Tooltip title="Refresh Data">
-          <IconButton
-            color="primary"
-            sx={{ borderRadius: 2 }}
-            disabled={isLoading}
-          >
-            <Refresh className={isLoading ? 'rotating' : ''} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Performance Metrics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {performanceMetrics.map((metric, index) => (
-          <Grid item xs={12} sm={6} md={3} key={metric.title}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: `${color}.main`,
+                color: `${color}.contrastText`,
+                mr: 2,
+              }}
             >
-              <Card
-                elevation={2}
+              {icon}
+            </Box>
+            <Typography variant="h6" component="div">
+              {title}
+            </Typography>
+          </Box>
+
+          <Typography variant="h4" component="div" gutterBottom>
+            {isLoading ? '...' : value}
+          </Typography>
+
+          {subtitle && (
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              {subtitle}
+            </Typography>
+          )}
+
+          {progress !== undefined && (
+            <Box sx={{ mt: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={progress}
                 sx={{
-                  height: '100%',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                  backdropFilter: 'blur(10px)',
+                  height: 6,
                   borderRadius: 3,
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    transition: 'transform 0.2s ease-in-out'
-                  }
+                  bgcolor: 'grey.200',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 3,
+                  },
                 }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      mb: 2
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: `${metric.color}.main`,
-                        color: `${metric.color}.contrastText`
-                      }}
-                    >
-                      {metric.icon}
-                    </Box>
-
-                    <Chip
-                      label={metric.change}
-                      size="small"
-                      color={metric.changeType === 'positive' ? 'success' : 'error'}
-                      variant="filled"
-                    />
-                  </Box>
-
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                    {metric.value}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {metric.title}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    {metric.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Charts Section */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Performance Timeline */}
-        <Grid item xs={12} md={8}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                height: 400,
-                borderRadius: 3
-              }}
-            >
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                📈 Performance Timeline
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                {progress.toFixed(1)}%
               </Typography>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
 
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={performanceHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                  <XAxis
-                    dataKey="time"
-                    stroke="rgba(0,0,0,0.6)"
-                    fontSize={12}
-                  />
-                  <YAxis stroke="rgba(0,0,0,0.6)" fontSize={12} />
-                  <RechartsTooltip
-                    contentStyle={{
-                      background: 'rgba(255,255,255,0.95)',
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: '8px',
-                      backdropFilter: 'blur(10px)'
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="response"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="Response Time (ms)"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="cache"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="Cache Hit Rate (%)"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="db"
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="DB Query Time (ms)"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Paper>
-          </motion.div>
-        </Grid>
-
-        {/* Optimization Breakdown */}
-        <Grid item xs={12} md={4}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                height: 400,
-                borderRadius: 3
-              }}
-            >
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                🎯 Optimization Breakdown
-              </Typography>
-
-              <Box sx={{ height: 250, display: 'flex', justifyContent: 'center' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={optimizationBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {optimizationBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip
-                      formatter={(value) => [`${value}%`, 'Contribution']}
-                      contentStyle={{
-                        background: 'rgba(255,255,255,0.95)',
-                        border: '1px solid rgba(0,0,0,0.1)',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Box>
-
-              {/* Legend */}
-              <Box sx={{ mt: 2 }}>
-                {optimizationBreakdown.map((item, index) => (
-                  <Box
-                    key={item.name}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 1
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          bgcolor: item.color
-                        }}
-                      />
-                      <Typography variant="caption">{item.name}</Typography>
-                    </Box>
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {item.value}%
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
-          </motion.div>
-        </Grid>
-      </Grid>
-
-      {/* System Health */}
+  return (
+    <Box sx={{ flexGrow: 1, p: 3 }}>
+      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
+        transition={{ duration: 0.5 }}
       >
-        <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-            🏥 System Health
-          </Typography>
-
-          <Grid container spacing={3}>
-            {systemHealth.map((health, index) => (
-              <Grid item xs={12} sm={6} md={3} key={health.name}>
-                <Box sx={{ mb: 2 }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 1
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {health.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                        color: `${health.color}.main`
-                      }}
-                    >
-                      {health.value}%
-                    </Typography>
-                  </Box>
-
-                  <LinearProgress
-                    variant="determinate"
-                    value={health.value}
-                    color={health.color as any}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: 'rgba(0,0,0,0.1)',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 3
-                      }
-                    }}
-                  />
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mt: 0.5, display: 'block' }}
-                  >
-                    {health.description}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
+        <Typography variant="h4" component="h1" gutterBottom>
+          🔱 LEX Dashboard
+        </Typography>
+        <Typography variant="body1" color="text.secondary" paragraph>
+          Real-time performance metrics and system overview
+        </Typography>
       </motion.div>
 
-      {/* Global Styles */}
-      <style jsx global>{`
-        .rotating {
-          animation: rotate 1s linear infinite;
-        }
+      {/* Status Alert */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Alert
+          severity={performanceData ? 'success' : 'warning'}
+          sx={{ mb: 3 }}
+          icon={<Psychology />}
+        >
+          {performanceData
+            ? '🔱 LEX is operating at optimal performance'
+            : 'Performance data is loading...'}
+        </Alert>
+      </motion.div>
 
-        @keyframes rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+      {/* Main Metrics Grid */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <Grid container spacing={3}>
+          {/* Cache Performance */}
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Cache Hit Rate"
+              value={`${performanceData?.cache_hit_rate?.toFixed(1) || 0}%`}
+              subtitle="Response caching efficiency"
+              icon={<Speed />}
+              color="success"
+              progress={performanceData?.cache_hit_rate || 0}
+            />
+          </Grid>
+
+          {/* Database Performance */}
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="DB Query Time"
+              value={`${performanceData?.average_db_query_time_ms?.toFixed(1) || 0}ms`}
+              subtitle="Average database response"
+              icon={<Memory />}
+              color="primary"
+              progress={Math.max(0, 100 - (performanceData?.average_db_query_time_ms || 0))}
+            />
+          </Grid>
+
+          {/* Cost Savings */}
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Cost Saved"
+              value={`$${performanceData?.total_cost_savings_usd?.toFixed(2) || 0}`}
+              subtitle="Total optimization savings"
+              icon={<TrendingUp />}
+              color="success"
+            />
+          </Grid>
+
+          {/* Optimization Score */}
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Optimization"
+              value={`${performanceData?.optimization_effectiveness?.toFixed(0) || 0}%`}
+              subtitle="Overall system efficiency"
+              icon={<Timeline />}
+              color="secondary"
+              progress={performanceData?.optimization_effectiveness || 0}
+            />
+          </Grid>
+
+          {/* Connection Stats */}
+          <Grid item xs={12} md={6}>
+            <motion.div variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
+                <Typography variant="h6" gutterBottom>
+                  <Cloud sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  Connection Statistics
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h4" color="primary">
+                        {connectionStats?.activeConnections || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Active Connections
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h4" color="success.main">
+                        {connectionStats?.totalMessagesSent || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Messages Sent
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {connectionStats?.averageResponseTime && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Average Response Time
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(100, 100 - connectionStats.averageResponseTime * 10)}
+                        sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                      />
+                      <Typography variant="body2">
+                        {connectionStats.averageResponseTime.toFixed(2)}s
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+              </Paper>
+            </motion.div>
+          </Grid>
+
+          {/* System Health */}
+          <Grid item xs={12} md={6}>
+            <motion.div variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
+                <Typography variant="h6" gutterBottom>
+                  <Psychology sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  System Health
+                </Typography>
+
+                <Box sx={{ space: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2">Requests Processed</Typography>
+                    <Chip
+                      label={performanceData?.requests_processed || 0}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2">Active Connections</Typography>
+                    <Chip
+                      label={performanceData?.active_connections || 0}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body2">Stream Time (Avg)</Typography>
+                    <Chip
+                      label={`${performanceData?.avg_stream_time?.toFixed(2) || 0}s`}
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                    />
+                  </Box>
+
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      System Status
+                    </Typography>
+                    <Chip
+                      label={performanceData ? '🔱 Operational' : '⚡ Loading'}
+                      color={performanceData ? 'success' : 'warning'}
+                      variant="filled"
+                      sx={{ fontWeight: 'bold' }}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </motion.div>
+          </Grid>
+        </Grid>
+      </motion.div>
+
+      {/* Footer Info */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            🔱 LEX Modern Dashboard • Real-time Performance Monitoring
+          </Typography>
+        </Box>
+      </motion.div>
     </Box>
   );
 };
