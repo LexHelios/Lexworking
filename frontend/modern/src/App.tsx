@@ -249,15 +249,6 @@ const App: React.FC = () => {
                 </Button>
                 
                 <Button 
-                  variant="outlined" 
-                  startIcon={<CloudUpload />}
-                  disabled
-                  size="large"
-                >
-                  Upload Files (Coming Soon)
-                </Button>
-                
-                <Button 
                   variant="text" 
                   startIcon={isDarkMode ? <Brightness7 /> : <Brightness4 />}
                   onClick={toggleTheme}
