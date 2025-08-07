@@ -41,7 +41,7 @@ interface TextGenerationProps {
   systemStatus: any;
 }
 
-const TextGenerationPanel: React.FC<TextGenerationProps> = ({ backendUrl, systemStatus }) => {
+const TextGenerationPanel: React.FC<TextGenerationProps> = ({ backendUrl }) => {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
