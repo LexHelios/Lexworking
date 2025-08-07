@@ -16,7 +16,8 @@ import {
   Clear,
   Speed,
   Psychology,
-  VolumeUp
+  VolumeUp,
+  Settings
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
