@@ -160,7 +160,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const renderMessageMetadata = (message: WebSocketMessage) => {
     if (!message.metadata) return null;
 
-    const { model_used, confidence, cache_hit, optimization_applied, performance_score } = message.metadata;
+    const { model_used, confidence, cache_hit, performance_score } = message.metadata;
 
     return (
       <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
