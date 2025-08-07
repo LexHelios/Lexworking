@@ -109,7 +109,7 @@ Always maintain scientific accuracy and educational value in your responses."""
         
         try:
             # Select best model for the request
-            model_config = self.models.get(model_preference, self.models["llama-3.2-90b-text-preview"])
+            model_config = self.models.get(model_preference, self.models["llama-3.1-405b"])
             
             # Construct educational prompt
             full_prompt = f"{self.education_prompt}\n\nContext: {context}\n\nEducational Request: {prompt}\n\nProvide a comprehensive, scientifically accurate response:"
