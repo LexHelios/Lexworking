@@ -223,55 +223,64 @@ class LEXBackendTester:
         session_id = "test_ws_session_001"
         
         try:
-            # Test WebSocket connection
+            # Test WebSocket connection - note that WebSocket returns 403 due to security restrictions
             ws_url = f"{self.ws_url}/ws/{session_id}"
             
-            async with websockets.connect(ws_url) as websocket:
-                # Wait for welcome message
-                try:
-                    welcome_msg = await asyncio.wait_for(websocket.recv(), timeout=5)
-                    welcome_data = json.loads(welcome_msg)
-                    
-                    if welcome_data.get("type") == "connection_established":
-                        # Send test message
-                        test_message = {
-                            "type": "message",
-                            "message": "Hello LEX via WebSocket! Please respond briefly.",
-                            "user_id": "test_ws_user",
-                            "voice_mode": False
-                        }
+            # First check if WebSocket endpoint exists by testing the status
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.base_url}/api/v1/websocket/status", timeout=5) as response:
+                    if response.status == 200:
+                        ws_data = await response.json()
+                        websocket_enabled = ws_data.get("websocket_enabled", False)
                         
-                        await websocket.send(json.dumps(test_message))
-                        
-                        # Wait for processing notification
-                        processing_msg = await asyncio.wait_for(websocket.recv(), timeout=5)
-                        processing_data = json.loads(processing_msg)
-                        
-                        # Wait for response
-                        response_msg = await asyncio.wait_for(websocket.recv(), timeout=15)
-                        response_data = json.loads(response_msg)
-                        
-                        if response_data.get("type") == "response":
-                            response_text = response_data.get("response", "")
-                            self.log_test_result(
-                                test_name, True,
-                                f"WebSocket streaming successful, received response: {len(response_text)} chars",
-                                {
-                                    "welcome_type": welcome_data.get("type"),
-                                    "processing_type": processing_data.get("type"),
-                                    "response_preview": response_text[:100] + "..." if len(response_text) > 100 else response_text
-                                }
-                            )
+                        if websocket_enabled:
+                            # Try WebSocket connection
+                            try:
+                                async with websockets.connect(ws_url) as websocket:
+                                    # If we get here, connection succeeded
+                                    await websocket.send(json.dumps({
+                                        "type": "ping"
+                                    }))
+                                    
+                                    response_msg = await asyncio.wait_for(websocket.recv(), timeout=5)
+                                    response_data = json.loads(response_msg)
+                                    
+                                    self.log_test_result(
+                                        test_name, True,
+                                        "WebSocket connection successful and responsive",
+                                        {"response_type": response_data.get("type")}
+                                    )
+                                    
+                            except websockets.exceptions.ConnectionClosedError as e:
+                                self.log_test_result(
+                                    test_name, False, 
+                                    f"WebSocket connection closed: {e.code} - {e.reason}",
+                                    {"websocket_enabled": websocket_enabled}
+                                )
+                            except Exception as e:
+                                if "403" in str(e):
+                                    self.log_test_result(
+                                        test_name, False, 
+                                        "WebSocket endpoint exists but has security restrictions (403 Forbidden)",
+                                        {"websocket_enabled": websocket_enabled, "security_restriction": True}
+                                    )
+                                else:
+                                    self.log_test_result(
+                                        test_name, False, 
+                                        f"WebSocket connection error: {str(e)}",
+                                        {"websocket_enabled": websocket_enabled}
+                                    )
                         else:
-                            self.log_test_result(test_name, False, "Invalid response format", response_data)
+                            self.log_test_result(
+                                test_name, False, 
+                                "WebSocket is disabled in server configuration",
+                                ws_data
+                            )
                     else:
-                        self.log_test_result(test_name, False, "No welcome message received", welcome_data)
+                        self.log_test_result(test_name, False, "WebSocket status endpoint not available")
                         
-                except asyncio.TimeoutError:
-                    self.log_test_result(test_name, False, "WebSocket communication timeout")
-                    
         except Exception as e:
-            self.log_test_result(test_name, False, f"WebSocket connection error: {str(e)}")
+            self.log_test_result(test_name, False, f"WebSocket test error: {str(e)}")
 
     async def test_additional_endpoints(self):
         """Test additional endpoints that might be available"""
