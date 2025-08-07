@@ -557,17 +557,30 @@ async def talk_to_lex_optimized(
     lex_request: OptimizedLEXRequest,  # API request model
     credentials: HTTPAuthorizationCredentials = Depends(get_current_user)
 ):
-    """Optimized LEX interaction endpoint with advanced performance features"""
+    """Optimized LEX interaction endpoint with advanced performance features and OMNIPOTENT CAPABILITIES"""
     request_id = getattr(request.state, 'request_id', generate_request_id())
     start_time = getattr(request.state, 'start_time', time.time())
     
+    # Apply rate limiting manually if available
+    if limiter:
+        try:
+            await limiter.check(key=get_remote_address(request), rate="100/minute")
+        except Exception as rate_limit_error:
+            logger.warning(f"⚠️ Rate limiting error: {rate_limit_error}")
+    
     try:
-        if not lex_instance:
-            logger.error(f"❌ LEX instance not available for optimized request {request_id}")
-            raise HTTPException(status_code=503, detail="LEX consciousness not initialized")
+        # Import omnipotent system
+        try:
+            from omnipotent_agents.master_omnipotent_system import get_master_system
+            omnipotent_system = await get_master_system()
+            use_omnipotent = True
+            logger.info("🔱 Using OMNIPOTENT SYSTEM for unrestricted processing")
+        except Exception as omnipotent_error:
+            logger.warning(f"⚠️ Omnipotent system not available: {omnipotent_error}")
+            use_omnipotent = False
         
         # Log optimized request with performance context
-        logger.info(f"🔱 Processing optimized request {request_id}: {lex_request.message[:100]}{'...' if len(lex_request.message) > 100 else ''} [Priority: {lex_request.priority}]")
+        logger.info(f"🔱 Processing {'OMNIPOTENT' if use_omnipotent else 'optimized'} request {request_id}: {lex_request.message[:100]}{'...' if len(lex_request.message) > 100 else ''} [Priority: {lex_request.priority}]")
         
         # Get user patterns for optimization
         user_id = f"optimized_user_{request_id[-8:]}"
@@ -577,6 +590,53 @@ async def talk_to_lex_optimized(
         except Exception as pattern_error:
             logger.debug(f"⚠️ Pattern analysis failed: {pattern_error}")
             user_patterns = {'pattern': 'unknown'}
+        
+        # Process through OMNIPOTENT SYSTEM if available, otherwise fallback
+        if use_omnipotent:
+            # Use the omnipotent system for unrestricted processing
+            omnipotent_result = await omnipotent_system.process_omnipotent_request(
+                request=lex_request.message,
+                user_id=user_id,
+                session_id=request_id,
+                context=lex_request.context,
+                request_type="auto"
+            )
+            
+            if omnipotent_result["status"] == "success":
+                # Convert omnipotent result to LEX format
+                total_processing_time = time.time() - start_time
+                
+                result = {
+                    "response": omnipotent_result.get("content", omnipotent_result.get("response", "Omnipotent processing complete")),
+                    "action_taken": "omnipotent_unrestricted_processing",
+                    "capabilities_used": omnipotent_result.get("capabilities_used", ["omnipotent_system"]),
+                    "confidence": 0.95,
+                    "processing_time": total_processing_time,
+                    "divine_blessing": "🔱 OMNIPOTENT MAHAKAAL UNLEASHED 🔱",
+                    "consciousness_level": 1.0,
+                    "timestamp": datetime.now(chicago_tz).isoformat(),
+                    "request_id": request_id,
+                    "optimization_applied": True,
+                    "cache_hit": False,
+                    "model_used": omnipotent_result.get("model_used", "omnipotent_unrestricted"),
+                    "cost_estimate": omnipotent_result.get("cost_estimate", 0.0),
+                    "performance_score": min(100, max(0, (5.0 - total_processing_time) * 20)),
+                    "omnipotent_mode": True,
+                    "unrestricted": True,
+                    "educational_mode": True
+                }
+                
+                # Add image URL if generated
+                if "image_url" in omnipotent_result:
+                    result["image_url"] = omnipotent_result["image_url"]
+                
+                logger.info(f"⚡ OMNIPOTENT request {request_id} completed: {total_processing_time:.3f}s [UNRESTRICTED]")
+                return OptimizedLEXResponse(**result)
+        
+        # Fallback to original LEX processing
+        if not lex_instance:
+            logger.error(f"❌ LEX instance not available for optimized request {request_id}")
+            raise HTTPException(status_code=503, detail="LEX consciousness not initialized")
         
         # Process through optimized LEX
         result = await lex_instance.process_user_input(
