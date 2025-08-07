@@ -130,7 +130,7 @@ const TextGenerationPanel: React.FC<TextGenerationProps> = ({ backendUrl, system
     }
   };
 
-  const useTemplate = (template: any) => {
+  const loadTemplate = (template: any) => {
     setPrompt(template.prompt);
     toast.success(`Template loaded: ${template.name}`);
   };
