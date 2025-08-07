@@ -296,7 +296,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           ) : (
             <Box>
               <AnimatePresence>
-                {messages.map((message, index) => (
+                {messages.map((message) => (
                   <motion.div
                     key={message.id}
                     initial={{ opacity: 0, y: 20 }}
