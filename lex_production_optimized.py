@@ -17,6 +17,10 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Union
 from logging.handlers import RotatingFileHandler
 
+# Load environment variables first
+from dotenv import load_dotenv
+load_dotenv('/app/.env')
+
 # Security imports
 from security_config import security_config, sanitize_input, validate_api_key_format, hash_sensitive_data, generate_request_id, require_valid_input
 
