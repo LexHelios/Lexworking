@@ -1,65 +1,24 @@
-export interface MediaFile {
-  id: string;
-  file: File;
-  name: string;
-  type: string;
-  size: number;
-  preview?: string;
-}
+// Chat types for LEX Modern Frontend
 
 export interface Message {
   id: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  sender: 'user' | 'lex';
-  timestamp: string;
-  mediaFiles?: MediaFile[];
-  mediaContent?: {
-    images?: Array<{
-      url?: string;
-      data?: string;
-      description?: string;
-    }>;
-    videos?: Array<{
-      url?: string;
-      data?: string;
-      description?: string;
-    }>;
-    audio?: Array<{
-      url?: string;
-      data?: string;
-      description?: string;
-    }>;
-    code?: {
-      language: string;
-      content: string;
-    };
-  };
-  metadata?: {
-    actionTaken: string;
-    capabilities: string[];
-    confidence: number;
-    processingTime?: number;
-  };
-  isError?: boolean;
+  timestamp: number;
+  metadata?: any;
+  streaming?: boolean;
+  tokens?: string[];
 }
 
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
-  isConnected: boolean;
 }
 
-export interface LEXResponse {
-  response: string;
-  action_taken: string;
-  capabilities_used: string[];
-  confidence: number;
-  processing_time: number;
-  divine_blessing: string;
-  consciousness_level: number;
-  voice_audio?: string;
-  media_content?: any;
-  timestamp: string;
-  session_id: string;
+export interface ChatContextType {
+  messages: Message[];
+  sendMessage: (content: string, options?: any) => void;
+  isConnected: boolean;
+  clearMessages: () => void;
 }
