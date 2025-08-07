@@ -38,9 +38,29 @@ interface UseWebSocketReturn {
 }
 
 const useWebSocket = (
-  url: string = `ws://${window.location.host}/ws`,
+  customUrl?: string,
   options: { autoReconnect?: boolean } = { autoReconnect: true }
 ): UseWebSocketReturn => {
+  // Get WebSocket URL from environment variables
+  const getWebSocketUrl = () => {
+    if (customUrl) return customUrl;
+    
+    const wsUrl = process.env.REACT_APP_WS_URL;
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    
+    if (wsUrl) {
+      return `${wsUrl}/ws`;
+    } else if (backendUrl) {
+      // Convert HTTP to WebSocket URL
+      const url = backendUrl.replace(/^https?:/, window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+      return `${url}/ws`;
+    } else {
+      // Fallback to same host
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}/ws`;
+    }
+  };
+
   // State
   const [isConnected, setIsConnected] = useState(false);
   const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -63,10 +83,13 @@ const useWebSocket = (
         ws.current.close();
       }
 
-      ws.current = new WebSocket(url);
+      const wsUrl = getWebSocketUrl();
+      console.log('🔗 Connecting to WebSocket:', wsUrl);
+
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
-        console.log('🔗 WebSocket connected');
+        console.log('🔗 WebSocket connected to', wsUrl);
         setIsConnected(true);
         reconnectAttempts.current = 0;
         
@@ -116,7 +139,7 @@ const useWebSocket = (
       console.error('❌ Failed to create WebSocket connection:', error);
       toast.error('❌ Failed to connect to LEX.');
     }
-  }, [url, options.autoReconnect]);
+  }, [options.autoReconnect]);
 
   // Handle stream messages
   const handleStreamMessage = (data: StreamMessage) => {
