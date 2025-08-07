@@ -156,7 +156,8 @@ class LEXBackendTester:
         """Test the main /api/v1/lex endpoint"""
         test_name = "LEX API Endpoint"
         try:
-            # Prepare test request
+            # Note: This endpoint has a rate limiting bug causing 500 errors
+            # We'll test it but expect it to fail due to server-side issues
             test_payload = {
                 "message": "Hello LEX, this is a test message. Please respond briefly.",
                 "voice_mode": False,
@@ -200,8 +201,15 @@ class LEXBackendTester:
                                     "response_preview": response_text[:100] + "..." if len(response_text) > 100 else response_text
                                 }
                             )
+                    elif response.status == 500:
+                        # Known issue with rate limiting bug
+                        error_text = await response.text()
+                        self.log_test_result(
+                            test_name, False, 
+                            "Server-side rate limiting bug causing 500 errors (known issue)",
+                            {"error": "Rate limiting implementation bug", "status": 500}
+                        )
                     elif response.status == 401:
-                        # Try without authentication
                         self.log_test_result(test_name, False, "Authentication required", await response.text())
                     else:
                         self.log_test_result(test_name, False, f"HTTP {response.status}", await response.text())
