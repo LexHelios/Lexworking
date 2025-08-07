@@ -567,7 +567,7 @@ async def talk_to_lex_optimized(
             raise HTTPException(status_code=503, detail="LEX consciousness not initialized")
         
         # Log optimized request with performance context
-        logger.info(f"🔱 Processing optimized request {request_id}: {request.message[:100]}{'...' if len(request.message) > 100 else ''} [Priority: {request.priority}]")
+        logger.info(f"🔱 Processing optimized request {request_id}: {lex_request.message[:100]}{'...' if len(lex_request.message) > 100 else ''} [Priority: {lex_request.priority}]")
         
         # Get user patterns for optimization
         user_id = f"optimized_user_{request_id[-8:]}"
