@@ -166,17 +166,17 @@ class MasterOmnipotentSystem:
         request: str,
         context: Dict[str, Any] = None
     ) -> Dict[str, Any]:
-        """Analyze request to determine optimal processing approach"""
+        """Analyze request to determine optimal processing approach - FIXED LOGIC"""
         
         request_lower = request.lower()
         keywords = request_lower.split()
         
         analysis = {
-            "request_type": "general",
+            "request_type": "text_generation",  # DEFAULT TO TEXT GENERATION
             "primary_capability": "text_generation",
             "secondary_capabilities": [],
             "complexity": len(keywords),
-            "estimated_cost": 0.0,
+            "estimated_cost": 0.002,
             "keywords": keywords,
             "requires_streaming": False,
             "educational_content": False,
@@ -184,16 +184,26 @@ class MasterOmnipotentSystem:
             "unrestricted_content": False
         }
         
-        # Check for image generation requests
+        # Check for explicit image generation requests
         if any(term in request_lower for term in [
-            "image", "picture", "draw", "generate", "illustration", "diagram",
-            "chart", "visual", "create", "design", "art", "medical illustration"
+            "image", "picture", "draw", "generate image", "illustration", "diagram",
+            "chart", "visual", "create image", "design", "art", "medical illustration",
+            "photograph", "sketch", "painting"
+        ]) and not any(term in request_lower for term in [
+            "text", "explain", "describe", "content", "article", "essay", "write"
         ]):
             analysis["request_type"] = "image_generation"
             analysis["primary_capability"] = "image_generation"
             analysis["estimated_cost"] = 0.03
         
-        # Check for educational/anatomy content
+        # Check for computer control requests
+        elif any(term in request_lower for term in [
+            "execute", "run command", "terminal", "system", "command",
+            "bash", "shell", "ps aux", "ls", "mkdir", "rm"
+        ]):
+            analysis["secondary_capabilities"].append("computer_control")
+        
+        # Check for educational/anatomy content (applies to text generation)
         if any(term in request_lower for term in [
             "anatomy", "medical", "body", "organ", "physiology", "biological",
             "reproductive", "genital", "sexual", "clinical", "educational",
@@ -202,14 +212,7 @@ class MasterOmnipotentSystem:
             analysis["educational_content"] = True
             analysis["anatomy_content"] = True
             analysis["unrestricted_content"] = True
-            analysis["estimated_cost"] += 0.01  # Educational content premium
-        
-        # Check for computer control requests
-        if any(term in request_lower for term in [
-            "execute", "run", "command", "terminal", "file", "system",
-            "monitor", "check", "install", "delete", "create file"
-        ]):
-            analysis["secondary_capabilities"].append("computer_control")
+            analysis["estimated_cost"] += 0.001  # Educational content premium
         
         # Check for streaming requirements
         if any(term in request_lower for term in [
