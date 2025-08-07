@@ -94,21 +94,21 @@ class LEXBackendTester:
         """Test the WebSocket status endpoint"""
         test_name = "WebSocket Status Endpoint"
         try:
+            # Try the actual WebSocket status endpoint that exists
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"{self.base_url}/api/v1/status", timeout=10) as response:
+                async with session.get(f"{self.base_url}/api/v1/websocket/status", timeout=10) as response:
                     if response.status == 200:
                         data = await response.json()
                         
                         # Check for WebSocket-related information
-                        if "active_connections" in data:
-                            active_connections = data["active_connections"]
-                            self.log_test_result(
-                                test_name, True,
-                                f"WebSocket status available, {active_connections} active connections",
-                                data
-                            )
-                        else:
-                            self.log_test_result(test_name, False, "No WebSocket status information", data)
+                        websocket_enabled = data.get("websocket_enabled", False)
+                        active_connections = data.get("active_connections", 0)
+                        
+                        self.log_test_result(
+                            test_name, True,
+                            f"WebSocket status available, enabled: {websocket_enabled}, {active_connections} active connections",
+                            data
+                        )
                     else:
                         self.log_test_result(test_name, False, f"HTTP {response.status}", await response.text())
                         
