@@ -210,7 +210,7 @@ const SystemControlPanel: React.FC<SystemControlProps> = ({ backendUrl, systemSt
                     <ListItem 
                       key={index} 
                       button 
-                      onClick={() => useHistoryCommand(histCmd)}
+                      onClick={() => loadHistoryCommand(histCmd)}
                       sx={{ 
                         borderRadius: 1,
                         mb: 0.5,
