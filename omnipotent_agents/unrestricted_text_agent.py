@@ -101,7 +101,7 @@ Always maintain scientific accuracy and educational value in your responses."""
         self,
         prompt: str,
         context: str = "",
-        model_preference: str = "llama-3.2-90b-text-preview",
+        model_preference: str = "llama-3.1-405b",
         max_tokens: int = 2048,
         temperature: float = 0.7
     ) -> Dict[str, Any]:
