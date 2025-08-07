@@ -119,11 +119,9 @@ const darkTheme = createTheme({
 
 const App: React.FC = () => {
   // State management
-  const [currentPage, setCurrentPage] = useState<string>('chat');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(
     localStorage.getItem('lex-theme') === 'dark' || false
   );
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
   // WebSocket connection for real-time features
   const { 
@@ -150,168 +148,117 @@ const App: React.FC = () => {
     localStorage.setItem('lex-theme', newMode ? 'dark' : 'light');
   };
 
-  // Page transitions
-  const pageVariants = {
-    initial: { opacity: 0, y: 20 },
-    in: { opacity: 1, y: 0 },
-    out: { opacity: 0, y: -20 }
-  };
-
-  const pageTransition = {
-    type: 'tween',
-    ease: 'anticipate',
-    duration: 0.3
-  };
-
-  // Render current page component
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'chat':
-        return (
-          <ChatInterface
-            isConnected={isConnected}
-            connectionId={connectionId}
-            sendMessage={sendMessage}
-            messages={messages}
-            streamingResponse={streamingResponse}
-          />
-        );
-      case 'dashboard':
-        return (
-          <Dashboard
-            performanceData={performanceData}
-            connectionStats={connectionStats}
-            isLoading={metricsLoading}
-          />
-        );
-      case 'performance':
-        return (
-          <PerformanceMonitor
-            performanceData={performanceData}
-            isLoading={metricsLoading}
-          />
-        );
-      case 'files':
-        return (
-          <FileUpload
-            isConnected={isConnected}
-            sendMessage={sendMessage}
-          />
-        );
-      case 'settings':
-        return (
-          <Settings
-            isDarkMode={isDarkMode}
-            toggleTheme={toggleTheme}
-            performanceData={performanceData}
-          />
-        );
-      default:
-        return (
-          <div style={{ padding: 20, textAlign: 'center' }}>
-            <h2>🔱 LEX</h2>
-            <p>Select a page from the sidebar</p>
-          </div>
-        );
-    }
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <div className={`app ${isDarkMode ? 'dark' : 'light'}`}>
-            {/* Sidebar */}
-            <Sidebar
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-              collapsed={sidebarCollapsed}
-              onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-              isConnected={isConnected}
-              connectionStats={connectionStats}
-            />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h2" component="h1" gutterBottom>
+              🔱 LEX Modern Dashboard
+            </Typography>
+            <Typography variant="h5" color="text.secondary" paragraph>
+              Advanced AI Assistant with Real-time Streaming
+            </Typography>
+            
+            <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="body1">
+                Status: {isConnected ? '✅ Connected' : '🔄 Connecting...'}
+              </Typography>
+              {connectionId && (
+                <Typography variant="body2" color="text.secondary">
+                  ID: {connectionId.slice(-8)}
+                </Typography>
+              )}
+            </Box>
 
-            {/* Main Content */}
-            <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-              {/* Connection Status Bar */}
-              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-                <div className="status-content">
-                  <div className="status-indicator">
-                    <div className={`indicator-dot ${isConnected ? 'connected' : 'disconnected'}`} />
-                    <span>
-                      {isConnected ? '🔱 LEX Connected' : '🔄 Connecting to LEX...'}
-                    </span>
-                  </div>
-                  
-                  {isConnected && connectionStats && (
-                    <div className="connection-info">
-                      <span>ID: {connectionId?.slice(-8) || 'Unknown'}</span>
-                      <span>•</span>
-                      <span>Messages: {connectionStats.totalMessagesSent || 0}</span>
-                      <span>•</span>
-                      <span>Active: {connectionStats.activeConnections || 0}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <Box sx={{ mt: 4 }}>
+              <Button 
+                variant="contained" 
+                size="large" 
+                onClick={toggleTheme}
+                sx={{ mr: 2 }}
+              >
+                {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+              </Button>
+              
+              <Button 
+                variant="outlined" 
+                size="large"
+                disabled={!isConnected}
+                onClick={() => sendMessage('Hello LEX! This is a test message from the modern dashboard.')}
+              >
+                Test Connection
+              </Button>
+            </Box>
 
-              {/* Page Content with Animation */}
-              <div className="page-container">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentPage}
-                    initial="initial"
-                    animate="in"
-                    exit="out"
-                    variants={pageVariants}
-                    transition={pageTransition}
-                    className="page-content"
-                  >
-                    {renderCurrentPage()}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </main>
-
-            {/* Global Toast Notifications */}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: isDarkMode ? '#1e293b' : '#ffffff',
-                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                  border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#ffffff',
-                  },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#ffffff',
-                  },
-                },
-              }}
-            />
-
-            {/* Performance Overlay (Development) */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="dev-performance-overlay">
-                <div className="performance-stats">
-                  <div>🔗 {isConnected ? 'Connected' : 'Disconnected'}</div>
-                  <div>📊 {performanceData?.cache_hit_rate?.toFixed(1) || 0}% Cache Hit</div>
-                  <div>⚡ {performanceData?.optimization_effectiveness?.toFixed(1) || 0}% Optimized</div>
-                </div>
-              </div>
+            {performanceData && (
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  📊 Performance Metrics
+                </Typography>
+                <Typography variant="body2">
+                  Cache Hit Rate: {performanceData.cache_hit_rate?.toFixed(1) || 0}% | 
+                  Optimization: {performanceData.optimization_effectiveness?.toFixed(0) || 0}%
+                </Typography>
+              </Box>
             )}
-          </div>
-        </ThemeProvider>
-      </ThemeContext.Provider>
+
+            {messages.length > 0 && (
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  💬 Recent Messages ({messages.length})
+                </Typography>
+                <Box sx={{ maxHeight: 300, overflow: 'auto', textAlign: 'left' }}>
+                  {messages.slice(-3).map((msg) => (
+                    <Paper key={msg.id} elevation={1} sx={{ p: 2, mb: 2 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {msg.role.toUpperCase()} - {new Date(msg.timestamp).toLocaleTimeString()}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        {msg.content.substring(0, 200)}...
+                      </Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {streamingResponse && (
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  ⚡ Live Streaming Response
+                </Typography>
+                <Paper elevation={1} sx={{ p: 2, textAlign: 'left', border: '2px solid', borderColor: 'primary.main' }}>
+                  <Typography variant="body2">
+                    {streamingResponse}
+                    <span style={{ animation: 'blink 1s infinite' }}>|</span>
+                  </Typography>
+                </Paper>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Global Toast Notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: isDarkMode ? '#1e293b' : '#ffffff',
+                color: isDarkMode ? '#f1f5f9' : '#0f172a',
+              },
+            }}
+          />
+
+          <style jsx>{`
+            @keyframes blink {
+              0%, 50% { opacity: 1; }
+              51%, 100% { opacity: 0; }
+            }
+          `}</style>
+        </Container>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
