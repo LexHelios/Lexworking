@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, Box, Typography, Button, Container, Paper } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Import components
-import ChatInterface from './components/ChatInterface';
-import Dashboard from './components/Dashboard';
-import PerformanceMonitor from './components/PerformanceMonitor';
-import FileUpload from './components/FileUpload';
-import Settings from './components/Settings';
-import Sidebar from './components/Sidebar';
 
 // Import hooks and utilities
 import useWebSocket from './hooks/useWebSocket';
 import usePerformanceMetrics from './hooks/usePerformanceMetrics';
-import { ThemeContext } from './contexts/ThemeContext';
 
 // Styles
 import './App.scss';
