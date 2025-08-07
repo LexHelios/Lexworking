@@ -471,6 +471,10 @@ async def optimized_startup_event():
         logger.info("  ✅ User session caching")
         logger.info("  ✅ Template response matching")
         
+        # Start WebSocket cleanup task
+        asyncio.create_task(cleanup_websockets())
+        logger.info("🚀 WebSocket cleanup task started")
+        
         logger.info("🔱 LEX Optimized Production Server ready with complete performance suite!")
         
     except Exception as e:
