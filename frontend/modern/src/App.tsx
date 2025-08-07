@@ -14,8 +14,8 @@ import Settings from './components/Settings';
 import Sidebar from './components/Sidebar';
 
 // Import hooks and utilities
-import { useWebSocket } from './hooks/useWebSocket';
-import { usePerformanceMetrics } from './hooks/usePerformanceMetrics';
+import useWebSocket from './hooks/useWebSocket';
+import usePerformanceMetrics from './hooks/usePerformanceMetrics';
 import { ThemeContext } from './contexts/ThemeContext';
 
 // Styles
