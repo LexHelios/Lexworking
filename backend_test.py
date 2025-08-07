@@ -205,7 +205,7 @@ class LEXBackendTester:
             # Test WebSocket connection
             ws_url = f"{self.ws_url}/ws/{session_id}"
             
-            async with websockets.connect(ws_url, timeout=10) as websocket:
+            async with websockets.connect(ws_url) as websocket:
                 # Wait for welcome message
                 try:
                     welcome_msg = await asyncio.wait_for(websocket.recv(), timeout=5)
