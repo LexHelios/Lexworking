@@ -129,14 +129,12 @@ const App: React.FC = () => {
     connectionId, 
     sendMessage, 
     messages, 
-    streamingResponse,
-    connectionStats 
+    streamingResponse
   } = useWebSocket();
 
   // Performance metrics
   const { 
-    performanceData, 
-    isLoading: metricsLoading 
+    performanceData 
   } = usePerformanceMetrics();
 
   // Theme management
