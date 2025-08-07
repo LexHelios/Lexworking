@@ -251,7 +251,7 @@ Always maintain scientific accuracy and educational value in your responses."""
         """Stream unrestricted educational content for real-time display"""
         
         try:
-            model_config = self.models.get(model_preference, self.models["llama-3.2-90b-text-preview"])
+            model_config = self.models.get(model_preference, self.models["llama-3.1-405b"])
             full_prompt = f"{self.education_prompt}\n\nContext: {context}\n\nEducational Request: {prompt}\n\nProvide a comprehensive response:"
             
             if model_config.provider == "together":
