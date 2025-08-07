@@ -335,21 +335,21 @@ Always maintain scientific accuracy and educational value in your responses."""
         }
 
     def get_best_model_for_request(self, request: str) -> str:
-        """Select the best model based on request content"""
+        """Select the best model based on request content - FIXED TO USE WORKING APIS"""
         request_lower = request.lower()
         
-        # For anatomy/medical content, try Together.ai models first (they may work better)
+        # ALWAYS use OpenRouter models since they're working and we have credits
         if any(term in request_lower for term in [
             "anatomy", "medical", "physiology", "organ", "body", 
             "reproductive", "genital", "sexual", "medical illustration", "educational"
         ]):
-            return "qwen-2.5-72b"  # Try Together.ai model first
+            return "llama-3.1-405b"  # OpenRouter's most powerful model for medical content
         
-        # For general science, use Together.ai model  
+        # For general science, use OpenRouter Claude
         elif any(term in request_lower for term in [
             "science", "biology", "chemistry", "physics", "research"
         ]):
-            return "llama-3.2-90b-text-preview"  # Together.ai model
+            return "claude-3-opus"  # OpenRouter Claude for science
         
-        # Default to Together.ai model instead of OpenRouter
-        return "mixtral-8x22b"
+        # Default to working OpenRouter model
+        return "llama-3.1-405b"  # Always use working OpenRouter models
