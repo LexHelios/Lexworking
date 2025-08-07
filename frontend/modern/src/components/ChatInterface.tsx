@@ -150,29 +150,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     // Assistant message with markdown support
     return (
-      <ReactMarkdown
-        components={{
-          code({ node, inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <SyntaxHighlighter
-                style={oneDark}
-                language={match[1]}
-                PreTag="div"
-                {...props}
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
-            ) : (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          }
-        }}
-      >
+      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
         {message.content}
-      </ReactMarkdown>
+      </Typography>
     );
   };
 
