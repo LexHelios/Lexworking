@@ -562,14 +562,6 @@ async def talk_to_lex_optimized(
     request_id = getattr(client_request.state, 'request_id', generate_request_id())
     start_time = getattr(client_request.state, 'start_time', time.time())
     
-    # Apply rate limiting if available
-    if limiter:
-        try:
-            await limiter.limit("100 per minute")(client_request)
-        except RateLimitExceeded:
-            logger.warning(f"🚫 Rate limit exceeded for optimized request {request_id}")
-            raise HTTPException(status_code=429, detail="Rate limit exceeded - try again shortly")
-    
     try:
         if not lex_instance:
             logger.error(f"❌ LEX instance not available for optimized request {request_id}")
