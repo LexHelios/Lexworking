@@ -522,7 +522,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </Paper>
 
       {/* Global Styles for Animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes blink {
           0%, 50% { opacity: 1; }
           51%, 100% { opacity: 0; }
