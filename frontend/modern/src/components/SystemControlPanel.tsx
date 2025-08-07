@@ -111,12 +111,12 @@ const SystemControlPanel: React.FC<SystemControlProps> = ({ backendUrl, systemSt
     setOutput('');
   };
 
-  const useQuickCommand = (quickCommand: any) => {
+  const loadQuickCommand = (quickCommand: any) => {
     setCommand(quickCommand.command);
     toast.success(`Command loaded: ${quickCommand.name}`);
   };
 
-  const useHistoryCommand = (historyCommand: string) => {
+  const loadHistoryCommand = (historyCommand: string) => {
     setCommand(historyCommand);
   };
 
