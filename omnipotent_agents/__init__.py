@@ -1,0 +1,1 @@
+# Omnipotent Agent System - Unrestricted AI for Scientific Education
