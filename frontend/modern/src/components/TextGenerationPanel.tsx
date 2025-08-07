@@ -188,7 +188,7 @@ const TextGenerationPanel: React.FC<TextGenerationProps> = ({ backendUrl, system
                     label={template.name}
                     size="small"
                     clickable
-                    onClick={() => useTemplate(template)}
+                    onClick={() => loadTemplate(template)}
                     color="primary"
                     variant="outlined"
                   />
