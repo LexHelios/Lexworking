@@ -22,8 +22,6 @@ import {
   Send,
   Psychology,
   Speed,
-  CloudUpload,
-  Settings,
   Brightness4,
   Brightness7,
   Chat as ChatIcon,
