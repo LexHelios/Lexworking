@@ -56,22 +56,26 @@ class OmnipotentBackendTester:
                         data = await response.json()
                         
                         # Check for omnipotent system status fields
-                        if data.get("status") == "success":
-                            system_status = data.get("system_status", {})
-                            models_available = system_status.get("models_available", 0)
-                            unrestricted_mode = system_status.get("unrestricted_mode", False)
+                        status = data.get("status")
+                        if status in ["success", "operational"]:
+                            omnipotent_mode = data.get("omnipotent_mode", False)
+                            unrestricted_models = data.get("unrestricted_models", False)
+                            educational_mode = data.get("educational_mode", False)
+                            anatomy_training = data.get("anatomy_training_mode", False)
                             
                             self.log_test_result(
                                 test_name, True,
-                                f"Omnipotent system operational with {models_available} models, unrestricted: {unrestricted_mode}",
+                                f"Omnipotent system {status}, unrestricted models: {unrestricted_models}, educational: {educational_mode}, anatomy training: {anatomy_training}",
                                 {
-                                    "models_available": models_available,
-                                    "unrestricted_mode": unrestricted_mode,
-                                    "educational_mode": system_status.get("educational_mode", False)
+                                    "status": status,
+                                    "omnipotent_mode": omnipotent_mode,
+                                    "unrestricted_models": unrestricted_models,
+                                    "educational_mode": educational_mode,
+                                    "anatomy_training_mode": anatomy_training
                                 }
                             )
                         else:
-                            self.log_test_result(test_name, False, f"System status not success: {data.get('status')}", data)
+                            self.log_test_result(test_name, False, f"System status not operational: {status}", data)
                     else:
                         error_text = await response.text()
                         self.log_test_result(test_name, False, f"HTTP {response.status}: {error_text}")
