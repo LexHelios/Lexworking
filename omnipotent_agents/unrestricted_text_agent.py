@@ -246,7 +246,7 @@ Always maintain scientific accuracy and educational value in your responses."""
         self,
         prompt: str,
         context: str = "",
-        model_preference: str = "llama-3.2-90b-text-preview"
+        model_preference: str = "llama-3.1-405b"
     ) -> AsyncGenerator[str, None]:
         """Stream unrestricted educational content for real-time display"""
         
