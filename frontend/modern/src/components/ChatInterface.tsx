@@ -53,7 +53,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [priority, setPriority] = useState<'speed' | 'balanced' | 'quality'>('balanced');
-  const [showSettings, setShowSettings] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
