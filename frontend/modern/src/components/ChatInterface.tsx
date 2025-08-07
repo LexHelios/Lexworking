@@ -13,7 +13,6 @@ import {
   Send,
   Mic,
   MicOff,
-  AttachFile,
   Clear,
   Speed,
   Psychology,
