@@ -215,3 +215,4 @@ const usePerformanceMetrics = (
 };
 
 export default usePerformanceMetrics;
+export { usePerformanceMetrics };
