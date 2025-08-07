@@ -1,0 +1,348 @@
+// LEX Modern Frontend Styles
+// 🔱 JAI MAHAKAAL! Advanced styling for professional UI
+
+// Import Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+// Variables
+:root {
+  // Colors - Light Theme
+  --lex-primary: #6366f1;
+  --lex-primary-light: #818cf8;
+  --lex-primary-dark: #4f46e5;
+  
+  --lex-secondary: #10b981;
+  --lex-secondary-light: #34d399;
+  --lex-secondary-dark: #059669;
+  
+  --lex-bg-primary: #f8fafc;
+  --lex-bg-secondary: #ffffff;
+  --lex-bg-tertiary: #f1f5f9;
+  
+  --lex-text-primary: #0f172a;
+  --lex-text-secondary: #475569;
+  --lex-text-tertiary: #64748b;
+  
+  --lex-border: #e2e8f0;
+  --lex-border-light: #f1f5f9;
+  
+  // Shadows
+  --lex-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --lex-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --lex-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --lex-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  // Spacing
+  --lex-spacing-xs: 0.25rem;
+  --lex-spacing-sm: 0.5rem;
+  --lex-spacing-md: 1rem;
+  --lex-spacing-lg: 1.5rem;
+  --lex-spacing-xl: 2rem;
+  --lex-spacing-2xl: 3rem;
+  
+  // Radius
+  --lex-radius-sm: 0.375rem;
+  --lex-radius: 0.5rem;
+  --lex-radius-md: 0.75rem;
+  --lex-radius-lg: 1rem;
+  
+  // Transitions
+  --lex-transition: all 0.2s ease-in-out;
+  --lex-transition-slow: all 0.3s ease-in-out;
+  
+  // Z-index
+  --lex-z-dropdown: 1000;
+  --lex-z-modal: 2000;
+  --lex-z-toast: 3000;
+}
+
+// Dark theme variables
+.app.dark {
+  --lex-bg-primary: #0f172a;
+  --lex-bg-secondary: #1e293b;
+  --lex-bg-tertiary: #334155;
+  
+  --lex-text-primary: #f1f5f9;
+  --lex-text-secondary: #cbd5e1;
+  --lex-text-tertiary: #94a3b8;
+  
+  --lex-border: #334155;
+  --lex-border-light: #475569;
+}
+
+// Global styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--lex-text-primary);
+  background-color: var(--lex-bg-primary);
+  overflow-x: hidden;
+}
+
+// App layout
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--lex-bg-primary);
+  transition: var(--lex-transition-slow);
+}
+
+// Main content area
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: var(--lex-transition-slow);
+  margin-left: 280px;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px;
+  }
+}
+
+// Connection status bar
+.connection-status {
+  height: 40px;
+  background: linear-gradient(90deg, var(--lex-primary), var(--lex-primary-light));
+  display: flex;
+  align-items: center;
+  padding: 0 var(--lex-spacing-lg);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--lex-shadow-sm);
+  
+  &.disconnected {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+  
+  .status-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--lex-spacing-sm);
+    
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      animation: pulse 2s infinite;
+      
+      &.disconnected {
+        background: #fbbf24;
+        animation: blink 1s infinite;
+      }
+    }
+  }
+  
+  .connection-info {
+    display: flex;
+    align-items: center;
+    gap: var(--lex-spacing-sm);
+    font-size: 12px;
+    opacity: 0.9;
+  }
+}
+
+// Page container
+.page-container {
+  flex: 1;
+  padding: var(--lex-spacing-lg);
+  background-color: var(--lex-bg-primary);
+  overflow-y: auto;
+}
+
+.page-content {
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Development performance overlay
+.dev-performance-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--lex-bg-secondary);
+  border: 1px solid var(--lex-border);
+  border-radius: var(--lex-radius);
+  padding: var(--lex-spacing-sm);
+  box-shadow: var(--lex-shadow-lg);
+  z-index: var(--lex-z-modal);
+  font-size: 11px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  
+  .performance-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: var(--lex-text-secondary);
+    
+    > div {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Utility classes
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--lex-bg-tertiary);
+  border-radius: var(--lex-radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--lex-border);
+  border-radius: var(--lex-radius);
+  
+  &:hover {
+    background: var(--lex-text-tertiary);
+  }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 260px;
+    
+    &.sidebar-collapsed {
+      margin-left: 70px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      margin-left: 0;
+    }
+  }
+  
+  .connection-status {
+    .connection-info {
+      display: none;
+    }
+  }
+  
+  .page-container {
+    padding: var(--lex-spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--lex-spacing-sm);
+  }
+  
+  .connection-status {
+    height: 36px;
+    padding: 0 var(--lex-spacing-md);
+    
+    .status-indicator {
+      font-size: 12px;
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .sidebar,
+  .connection-status,
+  .dev-performance-overlay {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+  
+  .page-container {
+    padding: 0 !important;
+  }
+}
