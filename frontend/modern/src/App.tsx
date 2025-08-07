@@ -529,8 +529,8 @@ const App: React.FC = () => {
           }}
         />
 
-        {/* Custom Styles */}
-        <style jsx>{`
+        {/* Custom Styles for animations */}
+        <style>{`
           @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
