@@ -33,7 +33,6 @@ import { Toaster, toast } from 'react-hot-toast';
 
 // Import hooks and utilities
 import useWebSocket from './hooks/useWebSocket';
-import usePerformanceMetrics from './hooks/usePerformanceMetrics';
 
 // Styles
 import './App.scss';
