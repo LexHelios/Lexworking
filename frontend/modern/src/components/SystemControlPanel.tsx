@@ -145,7 +145,7 @@ const SystemControlPanel: React.FC<SystemControlProps> = ({ backendUrl, systemSt
                     label={cmd.name}
                     size="small"
                     clickable
-                    onClick={() => useQuickCommand(cmd)}
+                    onClick={() => loadQuickCommand(cmd)}
                     color="primary"
                     variant="outlined"
                   />
