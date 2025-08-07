@@ -175,7 +175,8 @@ Always maintain scientific accuracy and educational value in your responses."""
             async with session.post(
                 "https://api.together.xyz/v1/chat/completions",
                 headers=headers,
-                json=payload
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=45)
             ) as response:
                 
                 if response.status != 200:
