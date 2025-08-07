@@ -559,8 +559,8 @@ async def talk_to_lex_optimized(
     credentials: HTTPAuthorizationCredentials = Depends(get_current_user)
 ):
     """Optimized LEX interaction endpoint with advanced performance features"""
-    request_id = getattr(client_request.state, 'request_id', generate_request_id())
-    start_time = getattr(client_request.state, 'start_time', time.time())
+    request_id = getattr(request.state, 'request_id', generate_request_id())
+    start_time = getattr(request.state, 'start_time', time.time())
     
     try:
         if not lex_instance:
