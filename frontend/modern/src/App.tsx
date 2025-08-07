@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
   AppBar,
   Toolbar,
   Typography,
+  Container,
   Box,
   Paper,
   Grid,
@@ -11,265 +14,440 @@ import {
   CardContent,
   Button,
   Chip,
-  Alert
+  Alert,
+  Fade,
+  LinearProgress
 } from '@mui/material';
 import {
   Psychology,
-  Dashboard,
+  AutoFixHigh,
+  Science,
+  Biotech,
   Computer,
   Image,
-  Science,
-  Settings
+  Terminal,
+  Speed
 } from '@mui/icons-material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { Toaster, toast } from 'react-hot-toast';
 
 // Import components
-import ChatInterface from './components/ChatInterface';
-import OmnipotentInterface from './components/OmnipotentInterface';
-import PerformanceMonitor from './components/PerformanceMonitor';
-import Settings from './components/Settings';
+import OmnipotentDashboard from './components/OmnipotentDashboard';
+import TextGenerationPanel from './components/TextGenerationPanel';
+import ImageGenerationPanel from './components/ImageGenerationPanel';
+import SystemControlPanel from './components/SystemControlPanel';
+import StatusMonitor from './components/StatusMonitor';
 
-// Import hooks
-import useWebSocket from './hooks/useWebSocket';
-import usePerformanceMetrics from './hooks/usePerformanceMetrics';
-
-// Dark theme for the omnipotent system
-const darkTheme = createTheme({
+// Dark cyberpunk theme
+const omnipotentTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#6366f1',
+      main: '#00ff88',
+      light: '#4cffb4',
+      dark: '#00cc6a',
     },
     secondary: {
-      main: '#8b5cf6',
+      main: '#ff0080',
+      light: '#ff4da6',
+      dark: '#cc0066',
     },
     background: {
-      default: '#0f0f23',
-      paper: '#1a1a2e',
+      default: '#000511',
+      paper: '#0a0e1a',
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#b0bec5',
+    },
+    error: {
+      main: '#ff1744',
+    },
+    warning: {
+      main: '#ffa726',
+    },
+    info: {
+      main: '#29b6f6',
+    },
+    success: {
+      main: '#66bb6a',
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Fira Code", "Roboto Mono", monospace',
+    h1: {
+      fontWeight: 700,
+      letterSpacing: '0.02em',
+    },
+    h2: {
+      fontWeight: 600,
+      letterSpacing: '0.01em',
+    },
+    h3: {
+      fontWeight: 600,
+    },
+    h4: {
+      fontWeight: 500,
+    },
+    body1: {
+      lineHeight: 1.6,
+    },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%)',
+          border: '1px solid #00ff8820',
+          backdropFilter: 'blur(10px)',
+          '&:hover': {
+            border: '1px solid #00ff88',
+            transform: 'translateY(-2px)',
+            transition: 'all 0.3s ease',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 600,
+          fontFamily: '"Fira Code", monospace',
+        },
+        contained: {
+          background: 'linear-gradient(45deg, #00ff88 30%, #00cc6a 90%)',
+          color: '#000',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #00cc6a 30%, #009952 90%)',
+            transform: 'scale(1.05)',
+            transition: 'all 0.2s ease',
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: 'linear-gradient(135deg, #000511 0%, #0a0e1a 100%)',
+          borderBottom: '1px solid #00ff8840',
+        },
+      },
+    },
   },
 });
 
-const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<string>('omnipotent');
-  const [systemStatus, setSystemStatus] = useState<any>(null);
-  
-  // WebSocket connection for real-time updates
-  const { 
-    connectionStatus, 
-    sendMessage, 
-    lastMessage,
-    connectionStats 
-  } = useWebSocket();
-  
-  // Performance monitoring
-  const performanceMetrics = usePerformanceMetrics();
+interface SystemStatus {
+  status: string;
+  omnipotent_mode: boolean;
+  unrestricted_models: boolean;
+  educational_mode: boolean;
+  capabilities: Record<string, boolean>;
+  models: {
+    text_models_available: string[];
+    image_models_available: string[];
+  };
+}
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [systemReady, setSystemReady] = useState(false);
+
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    // Fetch system status on load
-    fetchSystemStatus();
-    
-    // Show connection status
-    if (connectionStatus === 'Connected') {
-      toast.success('🔱 Connected to OMNIPOTENT System');
-    } else if (connectionStatus === 'Disconnected') {
-      toast.error('❌ Disconnected from system');
-    }
-  }, [connectionStatus]);
+    initializeSystem();
+    const interval = setInterval(checkSystemHealth, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, []);
 
-  const fetchSystemStatus = async () => {
+  const initializeSystem = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${backendUrl}/health`);
-      const data = await response.json();
-      setSystemStatus(data);
+      // Test backend connectivity
+      const healthResponse = await fetch(`${backendUrl}/health`);
+      
+      if (!healthResponse.ok) {
+        throw new Error('Backend not responding');
+      }
+
+      // Get omnipotent system status
+      const statusResponse = await fetch(`${backendUrl}/api/v1/omnipotent/status`);
+      
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        setSystemStatus(statusData);
+        
+        if (statusData.status === 'operational' && statusData.omnipotent_mode) {
+          setSystemReady(true);
+          toast.success('🔱 OMNIPOTENT SYSTEM ONLINE');
+        } else {
+          toast.error('⚠️ System partially operational');
+        }
+      } else {
+        toast.error('❌ Omnipotent system not responding');
+      }
+      
     } catch (error) {
-      console.error('Failed to fetch system status:', error);
-      toast.error('Failed to fetch system status');
+      console.error('System initialization failed:', error);
+      toast.error('🚨 System initialization failed');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const checkSystemHealth = async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/v1/omnipotent/status`);
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data);
+      }
+    } catch (error) {
+      console.warn('Health check failed:', error);
+    }
+  };
+
+  const getSystemStatusColor = () => {
+    if (!systemStatus) return 'error';
+    if (systemStatus.status === 'operational' && systemStatus.omnipotent_mode) return 'success';
+    return 'warning';
+  };
+
+  const getCapabilityCount = () => {
+    if (!systemStatus?.capabilities) return 0;
+    return Object.values(systemStatus.capabilities).filter(Boolean).length;
   };
 
   const renderCurrentView = () => {
+    const commonProps = { backendUrl, systemStatus };
+    
     switch (currentView) {
-      case 'omnipotent':
-        return <OmnipotentInterface />;
-      case 'chat':
-        return <ChatInterface />;
-      case 'performance':
-        return <PerformanceMonitor />;
-      case 'settings':
-        return <Settings />;
+      case 'dashboard':
+        return <OmnipotentDashboard {...commonProps} />;
+      case 'text':
+        return <TextGenerationPanel {...commonProps} />;
+      case 'image':
+        return <ImageGenerationPanel {...commonProps} />;
+      case 'system':
+        return <SystemControlPanel {...commonProps} />;
+      case 'status':
+        return <StatusMonitor {...commonProps} />;
       default:
-        return <OmnipotentInterface />;
+        return <OmnipotentDashboard {...commonProps} />;
     }
   };
 
-  return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: 'background.default' }}>
-        <AppBar position="static" elevation={0} sx={{ bgcolor: '#1a1a2e' }}>
-          <Toolbar>
-            <Psychology sx={{ mr: 2, fontSize: 32, color: '#6366f1' }} />
-            <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-              🔱 LEX OMNIPOTENT SYSTEM 🔱
+  if (loading) {
+    return (
+      <ThemeProvider theme={omnipotentTheme}>
+        <CssBaseline />
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          justifyContent="center" 
+          alignItems="center" 
+          minHeight="100vh"
+          bgcolor="background.default"
+        >
+          <Box mb={4}>
+            <Psychology sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
+            <Typography variant="h3" align="center" color="primary">
+              🔱 OMNIPOTENT AI SYSTEM 🔱
             </Typography>
+            <Typography variant="h6" align="center" color="text.secondary" sx={{ mt: 1 }}>
+              Initializing unlimited AI capabilities...
+            </Typography>
+          </Box>
+          
+          <Box width="300px" mb={2}>
+            <LinearProgress color="primary" />
+          </Box>
+          
+          <Typography variant="body2" color="text.secondary">
+            Loading unrestricted models and autonomous agents...
+          </Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  return (
+    <ThemeProvider theme={omnipotentTheme}>
+      <CssBaseline />
+      
+      {/* Main App Bar */}
+      <AppBar position="static" elevation={0}>
+        <Toolbar>
+          <Box display="flex" alignItems="center" flexGrow={1}>
+            <Psychology sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
+            <Box>
+              <Typography variant="h5" component="div" sx={{ fontWeight: 700 }}>
+                🔱 OMNIPOTENT AI SYSTEM 🔱
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Unrestricted Autonomous Intelligence
+              </Typography>
+            </Box>
+          </Box>
+          
+          {/* System Status Indicators */}
+          <Box display="flex" gap={1} alignItems="center">
+            <Chip
+              label={systemReady ? "OPERATIONAL" : "INITIALIZING"}
+              color={systemReady ? "success" : "warning"}
+              size="small"
+              variant="outlined"
+              icon={<AutoFixHigh />}
+            />
             
-            {/* System Status Indicators */}
-            <Box display="flex" gap={2} alignItems="center">
+            <Chip
+              label="UNRESTRICTED"
+              color="error"
+              size="small"
+              sx={{ 
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #ff1744, #d50000)',
+                color: 'white'
+              }}
+            />
+            
+            {systemStatus && (
               <Chip
-                label={connectionStatus}
-                color={connectionStatus === 'Connected' ? 'success' : 'error'}
+                label={`${getCapabilityCount()}/10 ACTIVE`}
+                color={getSystemStatusColor()}
                 size="small"
                 variant="outlined"
               />
-              
-              {systemStatus && (
-                <Chip
-                  label={systemStatus.status}
-                  color={systemStatus.status === 'operational' ? 'success' : 'warning'}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-              
-              <Chip
-                label="Unrestricted Mode"
-                color="error"
-                size="small"
-                sx={{ fontWeight: 'bold' }}
-              />
-            </Box>
-          </Toolbar>
-        </AppBar>
-
-        {/* Navigation Bar */}
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            p: 1, 
-            m: 2, 
-            bgcolor: 'background.paper',
-            borderRadius: 2
-          }}
-        >
-          <Box display="flex" gap={1} flexWrap="wrap">
-            <Button
-              variant={currentView === 'omnipotent' ? 'contained' : 'outlined'}
-              startIcon={<Psychology />}
-              onClick={() => setCurrentView('omnipotent')}
-              sx={{ textTransform: 'none' }}
-            >
-              🔱 Omnipotent Interface
-            </Button>
-            
-            <Button
-              variant={currentView === 'chat' ? 'contained' : 'outlined'}
-              startIcon={<Dashboard />}
-              onClick={() => setCurrentView('chat')}
-              sx={{ textTransform: 'none' }}
-            >
-              💬 Chat Interface
-            </Button>
-            
-            <Button
-              variant={currentView === 'performance' ? 'contained' : 'outlined'}
-              startIcon={<Computer />}
-              onClick={() => setCurrentView('performance')}
-              sx={{ textTransform: 'none' }}
-            >
-              📊 Performance Monitor
-            </Button>
-            
-            <Button
-              variant={currentView === 'settings' ? 'contained' : 'outlined'}
-              startIcon={<Settings />}
-              onClick={() => setCurrentView('settings')}
-              sx={{ textTransform: 'none' }}
-            >
-              ⚙️ Settings
-            </Button>
+            )}
           </Box>
-        </Paper>
+        </Toolbar>
+      </AppBar>
 
-        {/* Warning Banner for Educational Use */}
-        <Container maxWidth="xl" sx={{ mb: 2 }}>
-          <Alert 
-            severity="info" 
-            sx={{ 
-              bgcolor: 'rgba(99, 102, 241, 0.1)',
-              border: '1px solid #6366f1',
-              '& .MuiAlert-icon': { color: '#6366f1' }
-            }}
-          >
-            <Typography variant="body2">
-              <strong>🎓 Educational Mode Active:</strong> This system is configured for scientific and anatomy education. 
-              Unrestricted content generation is enabled for legitimate educational purposes including medical training, 
-              scientific research, and anatomical studies.
-            </Typography>
-          </Alert>
-        </Container>
-
-        {/* Main Content */}
-        {renderCurrentView()}
-
-        {/* System Info Footer */}
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            p: 2, 
-            m: 2, 
-            mt: 4,
-            bgcolor: 'background.paper',
-            borderRadius: 2
-          }}
-        >
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>System:</strong> LEX Omnipotent v2.0
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Mode:</strong> Educational/Scientific
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Models:</strong> Unrestricted Access
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Safety:</strong> Educational Override
-              </Typography>
-            </Grid>
+      {/* Navigation Bar */}
+      <Paper 
+        elevation={1} 
+        sx={{ 
+          p: 2, 
+          m: 2, 
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%)',
+          border: '1px solid #00ff8820'
+        }}
+      >
+        <Grid container spacing={1}>
+          <Grid item>
+            <Button
+              variant={currentView === 'dashboard' ? 'contained' : 'outlined'}
+              startIcon={<Psychology />}
+              onClick={() => setCurrentView('dashboard')}
+              size="small"
+            >
+              Dashboard
+            </Button>
           </Grid>
-        </Paper>
+          
+          <Grid item>
+            <Button
+              variant={currentView === 'text' ? 'contained' : 'outlined'}
+              startIcon={<Science />}
+              onClick={() => setCurrentView('text')}
+              size="small"
+            >
+              Text Generation
+            </Button>
+          </Grid>
+          
+          <Grid item>
+            <Button
+              variant={currentView === 'image' ? 'contained' : 'outlined'}
+              startIcon={<Image />}
+              onClick={() => setCurrentView('image')}
+              size="small"
+            >
+              Image Generation
+            </Button>
+          </Grid>
+          
+          <Grid item>
+            <Button
+              variant={currentView === 'system' ? 'contained' : 'outlined'}
+              startIcon={<Terminal />}
+              onClick={() => setCurrentView('system')}
+              size="small"
+            >
+              System Control
+            </Button>
+          </Grid>
+          
+          <Grid item>
+            <Button
+              variant={currentView === 'status' ? 'contained' : 'outlined'}
+              startIcon={<Speed />}
+              onClick={() => setCurrentView('status')}
+              size="small"
+            >
+              Status Monitor
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
 
-        {/* Toast Notifications */}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#1a1a2e',
-              color: '#fff',
-              border: '1px solid #6366f1',
-            },
+      {/* Educational Warning */}
+      <Container maxWidth="xl" sx={{ mb: 2 }}>
+        <Alert 
+          severity="info" 
+          sx={{ 
+            bgcolor: 'rgba(0, 255, 136, 0.1)',
+            border: '1px solid #00ff88',
+            color: 'text.primary',
+            '& .MuiAlert-icon': { color: '#00ff88' }
           }}
-        />
-      </Box>
+          icon={<Biotech />}
+        >
+          <Typography variant="body2">
+            <strong>🎓 EDUCATIONAL MODE:</strong> This system is configured for scientific research and medical education. 
+            Unrestricted content generation is enabled for legitimate educational purposes including anatomy training and clinical studies.
+          </Typography>
+        </Alert>
+      </Container>
+
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ pb: 4 }}>
+        <Fade in timeout={500}>
+          <Box>
+            {renderCurrentView()}
+          </Box>
+        </Fade>
+      </Container>
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#0a0e1a',
+            color: '#ffffff',
+            border: '1px solid #00ff88',
+            borderRadius: '8px',
+            fontFamily: '"Fira Code", monospace',
+          },
+          success: {
+            iconTheme: {
+              primary: '#00ff88',
+              secondary: '#000',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ff1744',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </ThemeProvider>
   );
 };
