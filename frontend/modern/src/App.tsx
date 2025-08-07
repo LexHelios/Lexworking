@@ -217,7 +217,12 @@ const App: React.FC = () => {
           />
         );
       default:
-        return <Navigate to="/chat" replace />;
+        return (
+          <div style={{ padding: 20, textAlign: 'center' }}>
+            <h2>🔱 LEX</h2>
+            <p>Select a page from the sidebar</p>
+          </div>
+        );
     }
   };
 
