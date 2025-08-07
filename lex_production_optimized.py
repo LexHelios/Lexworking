@@ -905,6 +905,149 @@ async def websocket_status():
         }, status_code=500)
 
 
+# OMNIPOTENT SYSTEM ENDPOINTS
+@app.post("/api/v1/omnipotent/generate")
+async def omnipotent_generate(
+    request: Request,
+    prompt: str = Form(...),
+    request_type: str = Form(default="auto"),
+    context: str = Form(default="{}"),
+    user_id: str = Form(default="user")
+):
+    """Direct omnipotent generation endpoint for unrestricted content"""
+    try:
+        from omnipotent_agents.master_omnipotent_system import get_master_system
+        omnipotent_system = await get_master_system()
+        
+        # Parse context
+        try:
+            context_dict = json.loads(context) if context else {}
+        except json.JSONDecodeError:
+            context_dict = {"raw_context": context}
+        
+        result = await omnipotent_system.process_omnipotent_request(
+            request=prompt,
+            user_id=user_id,
+            context=context_dict,
+            request_type=request_type
+        )
+        
+        return JSONResponse(result)
+        
+    except Exception as e:
+        logger.error(f"❌ Omnipotent generation failed: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": str(e),
+            "omnipotent": True
+        }, status_code=500)
+
+@app.post("/api/v1/omnipotent/image")
+async def omnipotent_image_generation(
+    request: Request,
+    prompt: str = Form(...),
+    style: str = Form(default="medical_textbook"),
+    model: str = Form(default="flux-dev-uncensored"),
+    safety_level: str = Form(default="unrestricted"),
+    user_id: str = Form(default="user")
+):
+    """Unrestricted image generation for educational/scientific content"""
+    try:
+        from omnipotent_agents.master_omnipotent_system import get_master_system
+        omnipotent_system = await get_master_system()
+        
+        result = await omnipotent_system.image_agent.generate_educational_image(
+            prompt=prompt,
+            style=style,
+            model_preference=model,
+            safety_level=safety_level
+        )
+        
+        return JSONResponse(result)
+        
+    except Exception as e:
+        logger.error(f"❌ Omnipotent image generation failed: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": str(e),
+            "omnipotent_image": True
+        }, status_code=500)
+
+@app.get("/api/v1/omnipotent/status")
+async def omnipotent_system_status():
+    """Get comprehensive omnipotent system status"""
+    try:
+        from omnipotent_agents.master_omnipotent_system import get_master_system
+        omnipotent_system = await get_master_system()
+        
+        status = await omnipotent_system.get_system_status()
+        return JSONResponse(status)
+        
+    except Exception as e:
+        logger.error(f"❌ Omnipotent status failed: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": str(e),
+            "omnipotent_available": False
+        }, status_code=500)
+
+@app.get("/api/v1/omnipotent/capabilities")
+async def omnipotent_capabilities():
+    """Get omnipotent system capabilities"""
+    try:
+        from omnipotent_agents.master_omnipotent_system import get_master_system
+        omnipotent_system = await get_master_system()
+        
+        capabilities = omnipotent_system.get_capabilities()
+        
+        return JSONResponse({
+            "status": "success",
+            "capabilities": capabilities,
+            "unrestricted": True,
+            "educational_mode": True,
+            "anatomy_training": True,
+            "omnipotent": True
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Omnipotent capabilities failed: {e}")
+        return JSONResponse({
+            "status": "error", 
+            "error": str(e),
+            "omnipotent_available": False
+        }, status_code=500)
+
+@app.post("/api/v1/omnipotent/computer")
+async def omnipotent_computer_control(
+    request: Request,
+    command: str = Form(...),
+    working_directory: str = Form(default="/app"),
+    timeout: int = Form(default=30),
+    user_id: str = Form(default="user")
+):
+    """Computer control through omnipotent system"""
+    try:
+        from omnipotent_agents.master_omnipotent_system import get_master_system
+        omnipotent_system = await get_master_system()
+        
+        result = await omnipotent_system.computer_agent.execute_terminal_command(
+            command=command,
+            working_directory=working_directory,
+            timeout=timeout,
+            require_confirmation=False  # Educational autonomy
+        )
+        
+        return JSONResponse(result)
+        
+    except Exception as e:
+        logger.error(f"❌ Omnipotent computer control failed: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": str(e),
+            "command": command
+        }, status_code=500)
+
+
 
 # WebSocket cleanup task
 async def cleanup_websockets():
