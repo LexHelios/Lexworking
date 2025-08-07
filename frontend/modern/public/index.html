@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="description" content="LEX Modern Frontend - Advanced AI Assistant with Real-time Streaming" />
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Inter font for better typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- PWA manifest -->
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  
+  <!-- Open Graph meta tags -->
+  <meta property="og:title" content="LEX - Advanced AI Assistant" />
+  <meta property="og:description" content="Modern AI assistant with real-time streaming, performance optimization, and advanced capabilities" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+  
+  <!-- Twitter meta tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LEX - Advanced AI Assistant" />
+  <meta name="twitter:description" content="Modern AI assistant with real-time streaming" />
+  
+  <title>LEX - Advanced AI Assistant</title>
+  
+  <style>
+    /* Loading spinner styles */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e2e8f0;
+      border-top: 3px solid #6366f1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    .loading-text {
+      color: #475569;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .loading-subtext {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Hide loading once React loads */
+    .app-loaded .loading-container {
+      display: none;
+    }
+    
+    /* Dark mode support for loading screen */
+    @media (prefers-color-scheme: dark) {
+      .loading-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      }
+      
+      .loading-text {
+        color: #f1f5f9;
+      }
+      
+      .loading-subtext {
+        color: #cbd5e1;
+      }
+      
+      .loading-spinner {
+        border-color: #334155;
+        border-top-color: #818cf8;
+      }
+    }
+    
+    /* Performance optimizations */
+    * {
+      box-sizing: border-box;
+    }
+    
+    html {
+      font-display: swap;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+
+<body>
+  <noscript>
+    <div style="text-align: center; padding: 50px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;">
+      <h1>🔱 LEX</h1>
+      <p>You need to enable JavaScript to run this application.</p>
+      <p>LEX is an advanced AI assistant that requires JavaScript for optimal performance.</p>
+    </div>
+  </noscript>
+  
+  <!-- Loading screen shown before React loads -->
+  <div class="loading-container" id="loading-screen">
+    <div style="text-align: center;">
+      <h1 style="color: #6366f1; font-size: 2.5rem; margin-bottom: 8px;">🔱 LEX</h1>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading Advanced AI Assistant...</div>
+      <div class="loading-subtext">Initializing real-time streaming & performance optimization</div>
+    </div>
+  </div>
+  
+  <!-- React root element -->
+  <div id="root"></div>
+  
+  <!-- Performance optimization script -->
+  <script>
+    // Remove loading screen once React is ready
+    window.addEventListener('load', function() {
+      const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        setTimeout(() => {
+          loadingScreen.style.opacity = '0';
+          loadingScreen.style.transition = 'opacity 0.5s ease-out';
+          setTimeout(() => {
+            loadingScreen.remove();
+            document.body.classList.add('app-loaded');
+          }, 500);
+        }, 500);
+      }
+    });
+    
+    // Performance monitoring
+    if ('performance' in window) {
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const perfData = performance.getEntriesByType('navigation')[0];
+          if (perfData) {
+            console.log('🔱 LEX Performance Metrics:');
+            console.log('- DOM Content Loaded:', Math.round(perfData.domContentLoadedEventEnd - perfData.fetchStart) + 'ms');
+            console.log('- Full Load Time:', Math.round(perfData.loadEventEnd - perfData.fetchStart) + 'ms');
+            console.log('- Time to Interactive:', Math.round(perfData.domInteractive - perfData.fetchStart) + 'ms');
+          }
+        }, 0);
+      });
+    }
+    
+    // Service worker registration (PWA support)
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('🔱 LEX: Service Worker registered successfully');
+          })
+          .catch(function(error) {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
