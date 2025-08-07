@@ -580,14 +580,14 @@ async def talk_to_lex_optimized(
         
         # Process through optimized LEX
         result = await lex_instance.process_user_input(
-            user_input=request.message,
+            user_input=lex_request.message,
             user_id=user_id,
-            context=request.context,
-            voice_mode=request.voice_mode,
-            priority=request.priority,
-            use_cache=request.use_cache,
-            model_preference=request.model_preference,
-            max_response_time=request.max_response_time
+            context=lex_request.context,
+            voice_mode=lex_request.voice_mode,
+            priority=lex_request.priority,
+            use_cache=lex_request.use_cache,
+            model_preference=lex_request.model_preference,
+            max_response_time=lex_request.max_response_time
         )
         
         # Calculate total processing time
