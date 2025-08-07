@@ -227,7 +227,7 @@ class MasterOmnipotentSystem:
         user_id: str,
         session_id: str
     ) -> Dict[str, Any]:
-        """Route request to appropriate agent(s)"""
+        """Route request to appropriate agent(s) - FIXED ROUTING LOGIC"""
         
         try:
             if analysis["request_type"] == "image_generation":
@@ -243,7 +243,7 @@ class MasterOmnipotentSystem:
                 )
             
             else:
-                # Route to text generation (most common)
+                # Route to text generation (most common) - ALWAYS use this for text
                 return await self._process_text_request(
                     request, analysis, context, user_id, session_id
                 )
