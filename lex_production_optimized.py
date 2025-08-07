@@ -552,10 +552,9 @@ async def optimized_health_check():
 # Main optimized LEX endpoint
 @app.post("/api/v1/lex", response_model=OptimizedLEXResponse)
 @require_valid_input(max_length=10000)
-@limiter.limit("100/minute") if limiter else lambda x: x
 async def talk_to_lex_optimized(
-    request: OptimizedLEXRequest,
-    client_request: Request,
+    request: Request,  # HTTP request for slowapi
+    lex_request: OptimizedLEXRequest,  # API request model
     credentials: HTTPAuthorizationCredentials = Depends(get_current_user)
 ):
     """Optimized LEX interaction endpoint with advanced performance features"""
