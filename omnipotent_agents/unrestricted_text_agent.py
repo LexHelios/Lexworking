@@ -338,18 +338,18 @@ Always maintain scientific accuracy and educational value in your responses."""
         """Select the best model based on request content"""
         request_lower = request.lower()
         
-        # For anatomy/medical content, use most capable model
+        # For anatomy/medical content, try Together.ai models first (they may work better)
         if any(term in request_lower for term in [
             "anatomy", "medical", "physiology", "organ", "body", 
-            "reproductive", "genital", "sexual", "medical illustration"
+            "reproductive", "genital", "sexual", "medical illustration", "educational"
         ]):
-            return "llama-3.1-405b"  # Most capable for medical content
+            return "qwen-2.5-72b"  # Try Together.ai model first
         
-        # For general science, use balanced model
+        # For general science, use Together.ai model  
         elif any(term in request_lower for term in [
             "science", "biology", "chemistry", "physics", "research"
         ]):
-            return "llama-3.2-90b-text-preview"
+            return "llama-3.2-90b-text-preview"  # Together.ai model
         
-        # Default to efficient model
-        return "qwen-2.5-72b"
+        # Default to Together.ai model instead of OpenRouter
+        return "mixtral-8x22b"
