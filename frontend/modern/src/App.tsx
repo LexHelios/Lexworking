@@ -99,10 +99,13 @@ const App: React.FC = () => {
     streamingResponse
   } = useWebSocket();
 
-  // Performance metrics
-  const { 
-    performanceData 
-  } = usePerformanceMetrics();
+  // Mock performance data for now
+  const performanceData = {
+    cache_hit_rate: 85.7,
+    optimization_effectiveness: 92.3,
+    total_cost_savings_usd: 15.47,
+    requests_processed: 1247
+  };
 
   // Theme management
   const theme = isDarkMode ? darkTheme : lightTheme;
