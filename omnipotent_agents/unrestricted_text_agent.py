@@ -33,35 +33,8 @@ class UnrestrictedTextAgent:
         self.openrouter_key = os.getenv("OPENROUTER_API_KEY")
         self.together_key = os.getenv("TOGETHER_API_KEY")
         
-        # Unrestricted models optimized for scientific/anatomy content
+        # Unrestricted models optimized for scientific/anatomy content - FIXED TO USE WORKING APIS
         self.models = {
-            "llama-3.2-90b-text-preview": ModelConfig(
-                provider="together",
-                model_id="meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
-                max_tokens=8192,
-                temperature=0.7,
-                supports_anatomy=True,
-                supports_science=True,
-                cost_per_token=0.0000009
-            ),
-            "mixtral-8x22b": ModelConfig(
-                provider="together", 
-                model_id="mistralai/Mixtral-8x22B-Instruct-v0.1",
-                max_tokens=8192,
-                temperature=0.7,
-                supports_anatomy=True,
-                supports_science=True,
-                cost_per_token=0.0000009
-            ),
-            "qwen-2.5-72b": ModelConfig(
-                provider="together",
-                model_id="Qwen/Qwen2.5-72B-Instruct-Turbo", 
-                max_tokens=8192,
-                temperature=0.7,
-                supports_anatomy=True,
-                supports_science=True,
-                cost_per_token=0.0000006
-            ),
             "llama-3.1-405b": ModelConfig(
                 provider="openrouter",
                 model_id="meta-llama/llama-3.1-405b-instruct",
@@ -79,6 +52,33 @@ class UnrestrictedTextAgent:
                 supports_anatomy=True,
                 supports_science=True,
                 cost_per_token=0.000075
+            ),
+            "llama-3.1-70b": ModelConfig(
+                provider="openrouter", 
+                model_id="meta-llama/llama-3.1-70b-instruct",
+                max_tokens=4096,
+                temperature=0.7,
+                supports_anatomy=True,
+                supports_science=True,
+                cost_per_token=0.0000008
+            ),
+            "qwen-2.5-72b-backup": ModelConfig(
+                provider="together",
+                model_id="Qwen/Qwen2.5-72B-Instruct-Turbo", 
+                max_tokens=8192,
+                temperature=0.7,
+                supports_anatomy=True,
+                supports_science=True,
+                cost_per_token=0.0000006
+            ),
+            "mixtral-8x7b": ModelConfig(
+                provider="openrouter",
+                model_id="mistralai/mixtral-8x7b-instruct",
+                max_tokens=4096,
+                temperature=0.7,
+                supports_anatomy=True,
+                supports_science=True,
+                cost_per_token=0.0000006
             )
         }
         
