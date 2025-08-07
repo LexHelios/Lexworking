@@ -18,7 +18,6 @@ import {
   PlayArrow,
   Pause,
   Download,
-  Visibility,
   Code,
   SmartToy,
   Person,
