@@ -812,7 +812,6 @@ async def cleanup_websockets():
         except Exception as e:
             logger.error(f"❌ WebSocket cleanup error: {e}")
 
-asyncio.create_task(cleanup_websockets())
 logger.info("🚀 WebSocket support integrated")
 
 # Static file serving with optimization
