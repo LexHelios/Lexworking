@@ -167,13 +167,22 @@ class UnrestrictedImageAgent:
             # Set FAL API key
             os.environ["FAL_KEY"] = self.fal_key
             
-            # Parse resolution
-            width, height = map(int, resolution.split('x'))
+            # Map resolution to FAL.ai supported formats
+            resolution_mapping = {
+                "1024x1024": "square_hd",
+                "512x512": "square",
+                "768x1024": "portrait_4_3",
+                "576x1024": "portrait_16_9",
+                "1024x768": "landscape_4_3",
+                "1024x576": "landscape_16_9"
+            }
+            
+            fal_image_size = resolution_mapping.get(resolution, "square_hd")
             
             # Prepare arguments based on model
             arguments = {
                 "prompt": prompt,
-                "image_size": resolution,
+                "image_size": fal_image_size,
                 "num_inference_steps": 28,
                 "guidance_scale": 3.5,
                 "num_images": 1,
