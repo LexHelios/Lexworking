@@ -240,6 +240,11 @@ Always maintain scientific accuracy and educational value in your responses."""
                 result = await response.json()
                 
                 content = result["choices"][0]["message"]["content"]
+                
+                # VALIDATE CONTENT BEFORE RETURNING SUCCESS
+                if not content or not content.strip():
+                    raise Exception("API returned empty content - check model or prompt")
+                
                 tokens_used = result.get("usage", {}).get("total_tokens", 0)
                 cost_estimate = tokens_used * model_config.cost_per_token
                 
