@@ -43,6 +43,10 @@ from pydantic import BaseModel, validator, Field
 import uvicorn
 import aiofiles
 
+# WebSocket streaming imports
+from websocket_streaming import get_websocket_manager
+from integrate_websocket_backend import integrate_websocket_with_production
+
 # Rate limiting
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
