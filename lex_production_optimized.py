@@ -772,7 +772,7 @@ websocket_manager = get_websocket_manager()
 # Add WebSocket routes
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """Main WebSocket endpoint for real-time streaming"""
+    """Main WebSocket endpoint for real-time streaming - OMNIPOTENT ENABLED"""
     connection_id = None
     
     try:
@@ -781,6 +781,16 @@ async def websocket_endpoint(websocket: WebSocket):
         
         connection_id = await websocket_manager.connect(websocket)
         logger.info(f"✅ WebSocket connected: {connection_id}")
+        
+        # Import omnipotent system for streaming
+        try:
+            from omnipotent_agents.master_omnipotent_system import get_master_system
+            omnipotent_system = await get_master_system()
+            omnipotent_available = True
+            logger.info("🔱 Omnipotent WebSocket streaming enabled")
+        except Exception as e:
+            logger.warning(f"⚠️ Omnipotent system not available for streaming: {e}")
+            omnipotent_available = False
         
         while True:
             try:
@@ -795,13 +805,53 @@ async def websocket_endpoint(websocket: WebSocket):
                     stream_delay = message.get('stream_delay', 0.03)
                     
                     if prompt:
-                        logger.info(f"🔱 Processing stream request: {prompt[:100]}...")
-                        await websocket_manager.stream_response(
-                            connection_id=connection_id,
-                            prompt=prompt,
-                            context=context,
-                            stream_delay=stream_delay
-                        )
+                        logger.info(f"🔱 Processing {'OMNIPOTENT' if omnipotent_available else 'standard'} stream request: {prompt[:100]}...")
+                        
+                        if omnipotent_available:
+                            # Use omnipotent streaming
+                            try:
+                                await websocket.send_text(json.dumps({
+                                    'type': 'stream_start',
+                                    'content': '🔱 OMNIPOTENT STREAMING ACTIVATED 🔱',
+                                    'timestamp': time.time(),
+                                    'omnipotent': True
+                                }))
+                                
+                                async for chunk in omnipotent_system.stream_omnipotent_response(
+                                    request=prompt,
+                                    user_id=f"ws_{connection_id}",
+                                    context=context
+                                ):
+                                    await websocket.send_text(json.dumps({
+                                        'type': 'stream_chunk',
+                                        'content': chunk,
+                                        'timestamp': time.time(),
+                                        'omnipotent': True
+                                    }))
+                                    await asyncio.sleep(stream_delay)
+                                
+                                await websocket.send_text(json.dumps({
+                                    'type': 'stream_end',
+                                    'content': '✅ OMNIPOTENT STREAM COMPLETE',
+                                    'timestamp': time.time(),
+                                    'omnipotent': True
+                                }))
+                                
+                            except Exception as omnipotent_error:
+                                logger.error(f"❌ Omnipotent streaming failed: {omnipotent_error}")
+                                await websocket.send_text(json.dumps({
+                                    'type': 'error',
+                                    'content': f'Omnipotent streaming error: {str(omnipotent_error)}',
+                                    'timestamp': time.time()
+                                }))
+                        else:
+                            # Fallback to standard streaming
+                            await websocket_manager.stream_response(
+                                connection_id=connection_id,
+                                prompt=prompt,
+                                context=context,
+                                stream_delay=stream_delay
+                            )
                 
                 elif message.get('type') == 'ping':
                     await websocket_manager.handle_ping_pong(connection_id)
