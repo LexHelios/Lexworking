@@ -16,12 +16,9 @@ import {
   Clear,
   Speed,
   Psychology,
-  Settings
+  VolumeUp
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Types
 interface WebSocketMessage {
