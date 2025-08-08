@@ -217,8 +217,8 @@ frontend:
 ## Metadata
 metadata:
   created_by: "testing_agent"
-  version: "1.1"
-  test_sequence: 2
+  version: "1.2"
+  test_sequence: 3
   run_ui: false
 
 ## Test Plan
