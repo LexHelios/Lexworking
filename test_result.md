@@ -190,7 +190,7 @@
 
   - task: "API Keys Verification"
     implemented: true
-    working: false
+    working: true
     file: "lex_production_optimized.py"
     stuck_count: 2
     priority: "high"
@@ -205,6 +205,9 @@
       - working: false
         agent: "testing"
         comment: "❌ Re-tested after credits added: API keys still not loading. System reports 0 configured keys found. Environment variable loading issue persists - this is not related to credits but to application configuration. Needs environment loading fix."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED! API keys loading successfully after dotenv fix. System reports 2/2 keys configured: OpenRouter and Alibaba API keys are now properly loaded from environment variables. Environment loading issue resolved."
 
 ## Frontend Test Results
 frontend:
