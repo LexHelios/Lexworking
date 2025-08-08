@@ -118,15 +118,18 @@
 
   - task: "Unrestricted Text Generation"
     implemented: true
-    working: false
+    working: true
     file: "lex_production_optimized.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ FAL.ai balance exhausted preventing text generation. External service issue: 'User is locked. Reason: Exhausted balance. Top up your balance at fal.ai/dashboard/billing.' System architecture is correct but requires API credit top-up."
+      - working: true
+        agent: "testing"
+        comment: "✅ Generated 4179 chars of educational content using llama-3.1-405b, unrestricted: True. Text generation working properly for educational content. Issue resolved - system now using alternative models when FAL.ai is unavailable."
 
   - task: "Unrestricted Image Generation"
     implemented: true
