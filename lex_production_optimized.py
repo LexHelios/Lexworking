@@ -176,10 +176,7 @@ app = FastAPI(
     version="2.0.0-optimized"
 )
 
-# Add rate limiting if available
-if limiter:
-    app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Rate limiting disabled - no exception handler needed
 
 # Performance tracking middleware
 @app.middleware("http")
