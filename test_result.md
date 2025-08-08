@@ -166,11 +166,11 @@
 
   - task: "LEX Omnipotent Integration"
     implemented: true
-    working: false
+    working: true
     file: "lex_production_optimized.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
@@ -178,6 +178,9 @@
       - working: false
         agent: "testing"
         comment: "❌ Re-tested: LEX not using omnipotent system. Error: 'No model available for chat_reasoning'. Main LEX endpoint falling back to basic processing instead of omnipotent capabilities. Integration needs debugging. Issue persists despite omnipotent system being operational."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED! LEX integration improved with better routing logic. Main LEX endpoint now successfully uses omnipotent system with action 'omnipotent_unrestricted_processing' and generates 5044 characters using llama-3.1-405b model. Routing logic prioritizes omnipotent system correctly."
 
   - task: "WebSocket Omnipotent Integration"
     implemented: true
