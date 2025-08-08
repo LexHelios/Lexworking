@@ -245,9 +245,11 @@ metadata:
 ## Test Plan
 test_plan:
   current_focus:
-    - "API Keys Verification"
+    - "WebSocket Connection Test"
+    - "WebSocket Omnipotent Integration"
   stuck_tasks:
-    - "API Keys Verification"
+    - "WebSocket Connection Test"
+    - "WebSocket Omnipotent Integration"
   test_all: false
   test_priority: "high_first"
 
