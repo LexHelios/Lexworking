@@ -71,11 +71,14 @@
     file: "lex_production_optimized.py"
     stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ WebSocket endpoint exists but has security restrictions (403 Forbidden). The WebSocket is enabled in configuration but connection is blocked by security middleware. This prevents real-time streaming functionality."
+      - working: false
+        agent: "testing"
+        comment: "❌ Re-tested: WebSocket endpoint still has security restrictions (403 Forbidden). WebSocket is enabled in server configuration (status shows enabled: True, 0 active connections) but connections are blocked by security middleware. Real-time streaming functionality remains unavailable."
 
   - task: "Additional Endpoints Test"
     implemented: true
