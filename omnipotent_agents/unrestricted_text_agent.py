@@ -13,6 +13,10 @@ import time
 from typing import Dict, List, Any, Optional, AsyncGenerator
 from dataclasses import dataclass
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv('/app/.env')
+
 logger = logging.getLogger(__name__)
 
 @dataclass
