@@ -51,15 +51,15 @@ import aiofiles
 from websocket_streaming import get_websocket_manager
 from integrate_websocket_backend import integrate_websocket_with_production
 
-# Rate limiting
-try:
-    from slowapi import Limiter, _rate_limit_exceeded_handler
-    from slowapi.util import get_remote_address
-    from slowapi.errors import RateLimitExceeded
-    RATE_LIMITING_AVAILABLE = True
-except ImportError:
-    print("⚠️ slowapi not available - rate limiting disabled")
-    RATE_LIMITING_AVAILABLE = False
+# Rate limiting - TEMPORARILY DISABLED FOR PERSONAL USE
+RATE_LIMITING_AVAILABLE = False  # Disabled to fix AttributeError bug
+
+# Fallback function for get_remote_address when slowapi is disabled
+def get_remote_address(request):
+    """Fallback function when slowapi is not available"""
+    if hasattr(request, 'client') and request.client:
+        return request.client.host
+    return 'unknown'
 
 # Setup enhanced logging with performance tracking
 def setup_optimized_logging():
@@ -106,19 +106,9 @@ cache_manager = get_cache_manager()
 db_pool = get_db_pool()
 response_optimizer = get_response_optimizer()
 
-# Initialize rate limiter with optimization
-if RATE_LIMITING_AVAILABLE and security_config.rate_limits['enabled']:
-    limiter = Limiter(
-        key_func=get_remote_address,
-        default_limits=[
-            f"{security_config.rate_limits['per_minute']} per minute",
-            f"{security_config.rate_limits['per_hour']} per hour"
-        ]
-    )
-    logger.info(f"✅ Optimized rate limiting enabled: {security_config.rate_limits}")
-else:
-    limiter = None
-    logger.warning("⚠️ Rate limiting disabled")
+# Rate limiting disabled - set limiter to None
+limiter = None
+logger.warning("⚠️ Rate limiting disabled for personal use")
 
 # Enhanced request models with optimization flags
 class OptimizedLEXRequest(BaseModel):
