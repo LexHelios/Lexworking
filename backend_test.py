@@ -395,9 +395,10 @@ async def main():
     """Main test execution function"""
     # Test different possible server URLs
     possible_urls = [
+        "http://localhost:8001",  # From backend .env PORT=8001
         "http://localhost:8000",  # Default from production_server.py
         "http://localhost:8080",  # Alternative port
-        "http://0.0.0.0:8000",   # Bind address
+        "http://0.0.0.0:8001",   # Bind address with correct port
     ]
     
     tester = None
