@@ -112,6 +112,9 @@
       - working: true
         agent: "testing"
         comment: "✅ Omnipotent capabilities available: 10 capabilities, unrestricted: True, anatomy training: True. All educational capabilities properly configured."
+      - working: true
+        agent: "testing"
+        comment: "✅ Re-tested: Omnipotent capabilities available: 10 capabilities, unrestricted: True, anatomy training: True. All educational capabilities properly configured."
 
   - task: "Unrestricted Text Generation"
     implemented: true
