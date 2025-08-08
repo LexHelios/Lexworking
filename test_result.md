@@ -169,6 +169,9 @@
       - working: false
         agent: "testing"
         comment: "❌ LEX not using omnipotent system. Error: 'No model available for chat_reasoning'. Main LEX endpoint falling back to basic processing instead of omnipotent capabilities. Integration needs debugging."
+      - working: false
+        agent: "testing"
+        comment: "❌ Re-tested: LEX not using omnipotent system. Error: 'No model available for chat_reasoning'. Main LEX endpoint falling back to basic processing instead of omnipotent capabilities. Integration needs debugging. Issue persists despite omnipotent system being operational."
 
   - task: "WebSocket Omnipotent Integration"
     implemented: true
