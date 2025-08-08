@@ -230,12 +230,10 @@ metadata:
 ## Test Plan
 test_plan:
   current_focus:
-    - "LEX Omnipotent Integration"
     - "API Keys Verification"
   stuck_tasks:
-    - "LEX Omnipotent Integration"
     - "API Keys Verification"
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 ## Agent Communication
