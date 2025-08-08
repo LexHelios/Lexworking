@@ -224,16 +224,11 @@ metadata:
 ## Test Plan
 test_plan:
   current_focus:
-    - "Unrestricted Text Generation"
-    - "Unrestricted Image Generation"
     - "LEX Omnipotent Integration"
     - "API Keys Verification"
   stuck_tasks:
-    - "Unrestricted Text Generation"
-    - "Unrestricted Image Generation"
     - "LEX Omnipotent Integration"
     - "API Keys Verification"
-    - "WebSocket Omnipotent Integration"
   test_all: true
   test_priority: "high_first"
 
